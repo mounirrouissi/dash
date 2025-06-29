@@ -1,26 +1,4 @@
 // src/App.tsx
-import React, { useState, useEffect } from 'react';
-import {
-  Bell,
-  FileText,
-  LayoutDashboard,
-  Menu,
-  Search,
-  Settings,
-  User,
-  CalendarDays, // Ensure this is imported if used in the dashboard itself
-  Ticket, // For any ticket-related icons if needed
-  Calendar, // For the sidebar header icon
-  Plus, // For quick actions
-  Home
-} from "lucide-react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useLocation,
-  useNavigate, // For programmatic navigation
-} from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -33,13 +11,27 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
   SidebarProvider,
+  SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import {
+  FileText, // For quick actions
+  Home,
+  Menu,
+  Search,
+  Settings,
+  User
+} from "lucide-react";
+import {
+  Route,
+  BrowserRouter as Router,
+  Routes,
+  useLocation,
+  useNavigate, // For programmatic navigation
+} from "react-router-dom";
 
 import { Dashboard } from './pages/Dashboard'; // Import from pages directory
-import { cn } from './lib/utils'; // Import cn for combining classNames
 import Invoices from './pages/Invoices';
 
 // --- Data for the Sidebar Navigation ---
@@ -53,14 +45,9 @@ const sidebarNavData = {
     },
     {
       title: "Invoices",
+      url: "/invoices",
       icon: FileText,
-      items: [
-        {
-          title: "All Invoices",
-          url: "/invoices",
-        },
-        // You can add more invoice sub-routes here if needed
-      ],
+
     },
     // Add other main navigation items if you expand your app
   ],
@@ -85,23 +72,23 @@ function AppContent() {
   const navigate = useNavigate();
 
   const handleNavigation = (url: string) => {
+    debugger
     navigate(url);
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50"> {/* Updated to match your old App background */}
+    <div className="flex min-h-screen w-full bg-gray-50"> {/* Updated to match your old App background */}
       <Sidebar collapsible="icon" className="fixed lg:relative z-30 inset-y-0 left-0 border-r border-gray-200 bg-white/70 backdrop-blur-xl shadow-lg">
         <SidebarHeader className="border-b border-gray-200 p-4 flex justify-between items-center">
           <a href="/" className="flex items-center space-x-2">
-            <CalendarDays className="h-6 w-6 text-primary" />
             <span className="text-lg font-semibold text-gray-900">EventDash</span>
           </a>
           <SidebarTrigger className="lg:hidden text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md p-1 transition-colors" />
         </SidebarHeader>
 
         <SidebarContent className="p-4">
-          {/* Search */}
           <form className="mb-4">
+            {/* Search */}
             <SidebarGroup className="py-0">
               <SidebarGroupContent className="relative">
                 <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 select-none opacity-50" />
@@ -143,7 +130,7 @@ function AppContent() {
           </SidebarGroup>
 
           {/* Secondary Navigation */}
-          <SidebarGroup>
+          {/* <SidebarGroup>
             <SidebarGroupLabel>Tools</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -163,7 +150,7 @@ function AppContent() {
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
-          </SidebarGroup>
+          </SidebarGroup> */}
         </SidebarContent>
 
         <SidebarFooter className="border-t border-gray-200 p-4 mt-auto">
@@ -210,10 +197,7 @@ function AppContent() {
                 className="w-full rounded-lg border border-gray-300 bg-gray-100 px-8 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <button className="relative p-2 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500" />
-            </button>
+
             <div className="h-6 w-px bg-gray-300"></div>
             <div className="flex items-center space-x-2">
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
