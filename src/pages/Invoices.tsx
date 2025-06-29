@@ -35,7 +35,7 @@ export default function Invoices() {
 
   return (
     <div className="invoices-page">
-      {/* Header */}
+    {/* Header 
        <header className="invoices-header">
         <div className="header-container">
           <div className="header-content">
@@ -45,7 +45,7 @@ export default function Invoices() {
             </div>
           </div>
         </div>
-      </header>
+      </header>*/}
 
       <main className="invoices-main">
          <div className="invoices-content space-y-8">
