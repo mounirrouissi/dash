@@ -11,18 +11,19 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
-  SidebarRail,
-  SidebarTrigger,
+  SidebarProvider
 } from "@/components/ui/sidebar";
 import {
+  ChevronLeft,
+  ChevronRight,
   FileText, // For quick actions
   Home,
   Menu,
   Search,
   Settings,
-  User
+  X
 } from "lucide-react";
+import React, { useState } from 'react';
 import {
   Route,
   BrowserRouter as Router,
@@ -71,67 +72,105 @@ function AppContent() {
   const activeRoute = useActiveRoute();
   const navigate = useNavigate();
 
+  // Sidebar open/collapse state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const handleNavigation = (url: string) => {
-    debugger
     navigate(url);
+    if (isMobile) setIsSidebarOpen(false);
   };
 
+  const toggleSidebar = () => setIsSidebarOpen((open) => !open);
+  const closeSidebar = () => setIsSidebarOpen(false);
+
   return (
-    <div className="flex min-h-screen w-full bg-gray-50"> {/* Updated to match your old App background */}
-      <Sidebar collapsible="icon" className="fixed lg:relative z-30 inset-y-0 left-0 border-r border-gray-200 bg-white/70 backdrop-blur-xl shadow-lg">
-        <SidebarHeader className="border-b border-gray-200 p-4 flex justify-between items-center">
-          <a href="/" className="flex items-center space-x-2">
-            <span className="text-lg font-semibold text-gray-900">EventDash</span>
-          </a>
-          <SidebarTrigger className="lg:hidden text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md p-1 transition-colors" />
+    <div className="flex min-h-screen w-full bg-gray-50">
+      {/* Overlay for mobile */}
+      {isMobile && isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+          onClick={closeSidebar}
+        />
+      )}
+      {/* Sidebar */}
+      <Sidebar
+        className={`
+          ${isMobile ? 'fixed' : 'relative'}
+          z-50 inset-y-0 left-0
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${isMobile ? 'w-64' : isSidebarOpen ? 'w-64' : 'w-16'}
+          transition-all duration-300 ease-in-out
+          border-r border-gray-200 bg-white/90 backdrop-blur-xl shadow-lg
+        `}
+      >
+        <SidebarHeader className="border-b border-gray-200 p-4 flex justify-between items-center h-16">
+          <div className={`flex items-center space-x-2 ${!isSidebarOpen && !isMobile ? 'justify-center' : ''}`}>
+            {(isSidebarOpen || isMobile) && (
+              <span className="text-lg font-semibold text-gray-900">EventDash</span>
+            )}
+          </div>
+          {/* Toggle button */}
+          <button
+            onClick={toggleSidebar}
+            className="p-1  rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+          >
+            {isMobile ? (
+              <X className="h-5 w-5" />
+            ) : isSidebarOpen ? (
+              <ChevronLeft className="h-5 w-5" />
+            ) : (
+              <ChevronRight className="h-5 w-5" />
+            )}
+          </button>
         </SidebarHeader>
-
-        <SidebarContent className="p-4">
-          <form className="mb-4">
-            {/* Search */}
-            <SidebarGroup className="py-0">
-              <SidebarGroupContent className="relative">
-                <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 select-none opacity-50" />
-                <SidebarInput placeholder="Search events..." className="pl-8" />
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </form>
-
+        <SidebarContent className="p-4 flex-1 overflow-y-auto">
+          {/* Search - only show when sidebar is open */}
+          {(isSidebarOpen || isMobile) && (
+            <form className="mb-4">
+              <SidebarGroup className="py-0">
+                <SidebarGroupContent className="relative">
+                  <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 select-none opacity-50" />
+                  <SidebarInput placeholder="Search events..." className="pl-8" />
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </form>
+          )}
           {/* Main Navigation */}
           <SidebarGroup>
-            <SidebarGroupLabel>Main</SidebarGroupLabel>
+            {(isSidebarOpen || isMobile) && <SidebarGroupLabel>Main</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
                 {sidebarNavData.navMain.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    {item.items ? (
-                      <SidebarMenuButton asChild>
-                        <div className="flex items-center">
-                          <item.icon className="mr-3 h-5 w-5" />
-                          <span>{item.title}</span>
-                        </div>
-                      </SidebarMenuButton>
-                    ) : (
-                      <SidebarMenuButton
-                        asChild
-                        isActive={activeRoute === item.url}
-                        onClick={() => handleNavigation(item.url)}
-                      >
-                        <a href={item.url} className="flex items-center"> {/* Use anchor for initial load */}
-                          <item.icon className="mr-3 h-5 w-5" />
-                          <span>{item.title}</span>
-                        </a>
-                      </SidebarMenuButton>
-                    )}
+                    <SidebarMenuButton
+                      asChild
+                      isActive={activeRoute === item.url}
+                      onClick={() => handleNavigation(item.url)}
+                      className={`${!isSidebarOpen && !isMobile ? 'justify-center px-2' : ''}`}
+                    >
+                      <a href={item.url} className="flex items-center">
+                        <item.icon className={`h-5 w-5 ${(isSidebarOpen || isMobile) ? 'mr-3' : ''}`} />
+                        {(isSidebarOpen || isMobile) && <span>{item.title}</span>}
+                      </a>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-
           {/* Secondary Navigation */}
-          {/* <SidebarGroup>
-            <SidebarGroupLabel>Tools</SidebarGroupLabel>
+          <SidebarGroup className="mt-6">
+            {(isSidebarOpen || isMobile) && <SidebarGroupLabel>Tools</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
                 {sidebarNavData.navSecondary.map((item) => (
@@ -140,54 +179,65 @@ function AppContent() {
                       asChild
                       isActive={activeRoute === item.url}
                       onClick={() => handleNavigation(item.url)}
+                      className={`${!isSidebarOpen && !isMobile ? 'justify-center px-2' : ''}`}
                     >
                       <a href={item.url} className="flex items-center">
-                        <item.icon className="mr-3 h-5 w-5" />
-                        <span>{item.title}</span>
+                        <item.icon className={`h-5 w-5 ${(isSidebarOpen || isMobile) ? 'mr-3' : ''}`} />
+                        {(isSidebarOpen || isMobile) && <span>{item.title}</span>}
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
-          </SidebarGroup> */}
+          </SidebarGroup>
         </SidebarContent>
-
         <SidebarFooter className="border-t border-gray-200 p-4 mt-auto">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild>
-                <a href="/profile"> {/* Example profile link */}
+              <SidebarMenuButton size="lg" asChild className={`${!isSidebarOpen && !isMobile ? 'justify-center px-2' : ''}`}>
+                <a href="/profile">
                   <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-blue-500 text-white">
                     <span className="text-sm font-medium">JD</span>
                   </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">John Doe</span>
-                    <span className="truncate text-xs text-gray-500">Admin</span>
-                  </div>
-                  <Settings className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                  {(isSidebarOpen || isMobile) && (
+                    <>
+                      <div className="grid flex-1 text-left text-sm leading-tight ml-3">
+                        <span className="truncate font-semibold">John Doe</span>
+                        <span className="truncate text-xs text-gray-500">Admin</span>
+                      </div>
+                      <Settings className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    </>
+                  )}
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
-        <SidebarRail />
       </Sidebar>
-
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden lg:ml-64"> {/* Adjusted ml-64 for sidebar */}
+      <div className="flex-1 flex flex-col overflow-hidden lg:ml-64">
         {/* Header */}
         <header className="flex h-16 items-center gap-4 border-b bg-white/80 backdrop-blur-xl px-4 sm:px-6 lg:px-8 sticky top-0 z-20 shadow-sm">
+          {/* Mobile menu button */}
           <button
-            onClick={() => { /* Handle mobile sidebar toggle if you implement one */ }}
-            className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+            onClick={toggleSidebar}
+            className="p-2 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors lg:hidden"
           >
             <Menu className="h-6 w-6" />
           </button>
+          {/* Desktop toggle - only show when sidebar is collapsed */}
+          {!isMobile && !isSidebarOpen && (
+            <button
+              onClick={toggleSidebar}
+              className="p-2 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+          )}
           <h1 className="text-xl font-semibold text-gray-900 capitalize">
             {activeRoute === "/" ? "Dashboard" : activeRoute === "/invoices" ? "Invoices" : "Page"}
           </h1>
-
           <div className="flex items-center space-x-4 ml-auto">
             <div className="relative hidden sm:block">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
@@ -197,25 +247,16 @@ function AppContent() {
                 className="w-full rounded-lg border border-gray-300 bg-gray-100 px-8 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-
             <div className="h-6 w-px bg-gray-300"></div>
-            <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
-                <User className="h-4 w-4 text-white" />
-              </div>
-              <span className="text-sm font-medium text-gray-700 hidden md:block">John Doe</span>
-            </div>
           </div>
         </header>
-
         {/* Main Page Content */}
         <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-7xl mx-auto"> {/* Container for content */}
+          <div className="max-w-7xl mx-auto">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/invoices" element={<Invoices />} />
               {/* Add more routes here as you expand your application */}
-              {/* Example: <Route path="/settings" element={<SettingsPage />} /> */}
             </Routes>
           </div>
         </main>

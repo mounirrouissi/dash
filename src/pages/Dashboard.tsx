@@ -87,6 +87,68 @@ export function Dashboard() { // Export as named function
     const [isLoading, setIsLoading] = useState(true); // General loading for all sections
     const [error, setError] = useState<string | null>(null);
 
+    // Add sorting state
+    const sortOptions = ["date", "revenue", "attendees", "capacity"] as const;
+    type SortKey = typeof sortOptions[number];
+    const [sortKey, setSortKey] = useState<SortKey>("date");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+    React.useEffect(() => {
+        console.log('Sorting changed:', { sortKey, sortOrder, eventsCount: eventsData.events.length });
+    }, [sortKey, sortOrder, eventsData.events.length]);
+    // Enhanced sorting implementation with debugging
+    const sortedEvents = React.useMemo(() => {
+        if (!eventsData.events || eventsData.events.length === 0) {
+            return [];
+        }
+
+        return [...eventsData.events].sort((a, b) => {
+            let aValue: any;
+            let bValue: any;
+
+            try {
+                // Map sort keys to actual property names
+                switch (sortKey) {
+                    case "date":
+                        aValue = new Date(a.date).getTime();
+                        bValue = new Date(b.date).getTime();
+                        // Check for invalid dates
+                        if (isNaN(aValue)) aValue = 0;
+                        if (isNaN(bValue)) bValue = 0;
+                        break;
+                    case "revenue":
+                        aValue = Number(a.revenue) || 0;
+                        bValue = Number(b.revenue) || 0;
+                        break;
+                    case "attendees":
+                        aValue = Number(a.attendees) || 0;
+                        bValue = Number(b.attendees) || 0;
+                        break;
+                    case "capacity":
+                        aValue = Number(a.capacity) || 0;
+                        bValue = Number(b.capacity) || 0;
+                        break;
+                    default:
+                        console.warn(`Unknown sort key: ${sortKey}`);
+                        aValue = 0;
+                        bValue = 0;
+                }
+
+                // Handle null/undefined values
+                if (aValue == null && bValue == null) return 0;
+                if (aValue == null) return sortOrder === "asc" ? -1 : 1;
+                if (bValue == null) return sortOrder === "asc" ? 1 : -1;
+
+                // Perform comparison
+                if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+                if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
+                return 0;
+
+            } catch (error) {
+                console.error('Error in sorting:', error, { a, b, sortKey, sortOrder });
+                return 0;
+            }
+        });
+    }, [eventsData.events, sortKey, sortOrder]);
     // *** Fetch dashboard metrics, recent invoices, and events on component mount ***
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -220,6 +282,26 @@ export function Dashboard() { // Export as named function
             {/* Events List */}
             <div>
                 <h2 className="text-lg font-medium text-gray-900 mb-4">Event Statistics</h2>
+                {/* Sorting Controls */}
+                <div className="flex items-center gap-2 mb-4">
+                    <label className="text-sm font-medium">Sort by:</label>
+                    <select
+                        className="border rounded px-2 py-1"
+                        value={sortKey}
+                        onChange={e => setSortKey(e.target.value as SortKey)}
+                    >
+                        {sortOptions.map(option => (
+                            <option key={option} value={option}>{option.charAt(0).toUpperCase() + option.slice(1)}</option>
+                        ))}
+                    </select>
+                    <button
+                        className="ml-2 px-2 py-1 border rounded"
+                        onClick={() => setSortOrder(order => (order === "asc" ? "desc" : "asc"))}
+                        title="Toggle sort order"
+                    >
+                        {sortOrder === "asc" ? "↑" : "↓"}
+                    </button>
+                </div>
                 {isLoading ? (
                     <div className="text-center py-8 text-muted-foreground">Loading events...</div>
                 ) : error ? (
@@ -228,8 +310,9 @@ export function Dashboard() { // Export as named function
                     <div className="text-center py-8 text-muted-foreground">No events found.</div>
                 ) : (
                     <div className="grid gap-6">
-                        {eventsData.events.map((event) => (
-                            <Card key={event.id} className="overflow-hidden">
+                        {/* Sort events before mapping */}
+                        {sortedEvents.map((event) => (
+                            <Card key={event.date + event.attendees + event.id} className="overflow-hidden">
                                 <CardHeader>
                                     <div className="flex items-start justify-between">
                                         <div className="space-y-1">
