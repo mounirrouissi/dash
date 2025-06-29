@@ -122,7 +122,8 @@ function AppContent() {
           {/* Toggle button */}
           <button
             onClick={toggleSidebar}
-            className="p-1  rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+            className="p-1 h-4 w-10 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+            style={{ marginLeft: 'auto' }} // <-- Add this line
           >
             {isMobile ? (
               <X className="h-5 w-5" />
@@ -239,14 +240,14 @@ function AppContent() {
             {activeRoute === "/" ? "Dashboard" : activeRoute === "/invoices" ? "Invoices" : "Page"}
           </h1>
           <div className="flex items-center space-x-4 ml-auto">
-            <div className="relative hidden sm:block">
+            {isMobile && <div className="relative hidden sm:block">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
               <input
                 type="text"
                 placeholder="Search..."
                 className="w-full rounded-lg border border-gray-300 bg-gray-100 px-8 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            </div>
+            </div>}
             <div className="h-6 w-px bg-gray-300"></div>
           </div>
         </header>
