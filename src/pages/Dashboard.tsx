@@ -77,7 +77,7 @@ const formatDisplayDate = (dateString: string): string => {
     });
 };
 
-export function Dashboard() { // Export as named function
+export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { // Export as named function
     // *** State for fetched dashboard data and loading/error states ***
     const [dashboardData, setDashboardData] = useState<DashboardMetrics>(initialDashboardMetrics);
     const [recentInvoicesData, setRecentInvoicesData] = useState<Invoice[]>(initialInvoices);
@@ -149,6 +149,18 @@ export function Dashboard() { // Export as named function
             }
         });
     }, [eventsData.events, sortKey, sortOrder]);
+
+    // Filter sortedEvents by searchTerm
+    const filteredEvents = React.useMemo(() => {
+        if (!searchTerm) return sortedEvents;
+        const lower = searchTerm.toLowerCase();
+        return sortedEvents.filter(event =>
+            event.name.toLowerCase().includes(lower) ||
+            event.location.toLowerCase().includes(lower) ||
+            event.category.toLowerCase().includes(lower)
+        );
+    }, [sortedEvents, searchTerm]);
+
     // *** Fetch dashboard metrics, recent invoices, and events on component mount ***
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -311,7 +323,7 @@ export function Dashboard() { // Export as named function
                 ) : (
                     <div className="grid gap-6">
                         {/* Sort events before mapping */}
-                        {sortedEvents.map((event) => (
+                        {filteredEvents.map((event) => (
                             <Card key={event.date + event.attendees + event.id} className="overflow-hidden">
                                 <CardHeader>
                                     <div className="flex items-start justify-between">

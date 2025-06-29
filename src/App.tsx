@@ -75,6 +75,7 @@ function AppContent() {
   // Sidebar open/collapse state
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -141,7 +142,12 @@ function AppContent() {
               <SidebarGroup className="py-0">
                 <SidebarGroupContent className="relative">
                   <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 select-none opacity-50" />
-                  <SidebarInput placeholder="Search events..." className="pl-8" />
+                  <SidebarInput
+                    placeholder="Search events..."
+                    className="pl-8"
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                  />
                 </SidebarGroupContent>
               </SidebarGroup>
             </form>
@@ -246,6 +252,8 @@ function AppContent() {
                 type="text"
                 placeholder="Search..."
                 className="w-full rounded-lg border border-gray-300 bg-gray-100 px-8 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
               />
             </div>}
             <div className="h-6 w-px bg-gray-300"></div>
@@ -255,7 +263,7 @@ function AppContent() {
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-7xl mx-auto">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={<Dashboard searchTerm={searchTerm} />} />
               <Route path="/invoices" element={<Invoices />} />
               {/* Add more routes here as you expand your application */}
             </Routes>
