@@ -20,7 +20,6 @@ import {
   FileText,
   Globe, // For quick actions
   Home,
-  Menu,
   Search,
   Settings
 } from "lucide-react";
@@ -269,22 +268,7 @@ function AppContent() {
       <div className={`flex-1 flex flex-col overflow-hidden ${!isMobile && isSidebarOpen ? 'lg:ml-64' : !isMobile ? 'lg:ml-16' : ''}`}>
         {/* Header */}
         <header className="flex h-16 items-center gap-4 border-b bg-white/80 backdrop-blur-xl px-4 sm:px-6 lg:px-8 sticky top-0 z-20 shadow-sm">
-          {/* Mobile menu button */}
-          <button
-            onClick={toggleSidebar}
-            className="p-2 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors lg:hidden"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          {/* Desktop toggle - only show when sidebar is collapsed */}
-          {!isMobile && !isSidebarOpen && (
-            <button
-              onClick={toggleSidebar}
-              className="p-2 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-          )}
+
           <h1 className="text-xl font-semibold text-gray-900 capitalize">
             {activeRoute === "/" ? t('dashboard.title') : activeRoute === "/invoices" ? t('navigation.invoices') : "Page"}
           </h1>
@@ -303,10 +287,16 @@ function AppContent() {
             {/* Language Toggle Button */}
             <button
               onClick={toggleLanguage}
-              className="p-2 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all duration-200 border border-transparent hover:border-gray-200"
               title={`Switch to ${i18n.language === 'en' ? 'French' : 'English'}`}
             >
-              <Globe className="h-5 w-5" />
+              <Globe className="h-4 w-4" />
+              <span className="text-sm font-medium hidden sm:inline">
+                {i18n.language === 'en' ? 'EN' : 'FR'}
+              </span>
+              <span className="text-xs text-gray-500 hidden md:inline">
+                {i18n.language === 'en' ? 'English' : 'Français'}
+              </span>
             </button>
           </div>
         </header>
