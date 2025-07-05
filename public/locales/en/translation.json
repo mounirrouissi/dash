@@ -1,0 +1,78 @@
+{
+    "navigation": {
+        "dashboard": "Dashboard",
+        "invoices": "Invoices",
+        "settings": "Settings",
+        "search": "Search events...",
+        "searchHeader": "Search...",
+        "profile": "Profile",
+        "createEvent": "Create Event",
+        "newInvoice": "New Invoice"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "globalStatistics": "Global Statistics",
+        "eventStatistics": "Event Statistics",
+        "recentInvoices": "Recent Invoices",
+        "loading": "Loading...",
+        "error": "Error!",
+        "noEvents": "No events found.",
+        "noInvoices": "No recent invoices found.",
+        "loadingEvents": "Loading events...",
+        "loadingInvoices": "Loading recent invoices...",
+        "errorLoadingEvents": "Error loading events:",
+        "errorLoadingInvoices": "Error loading invoices:"
+    },
+    "statistics": {
+        "totalRevenue": "Total Revenue",
+        "ticketsSold": "Tickets Sold",
+        "customers": "Customers",
+        "pendingInvoices": "Pending Invoices",
+        "fromLastMonth": "from last month",
+        "loadingChange": "Loading change..."
+    },
+    "events": {
+        "sortBy": "Sort by:",
+        "date": "Date",
+        "revenue": "Revenue",
+        "attendees": "Attendees",
+        "capacity": "Capacity",
+        "toggleSort": "Toggle sort order",
+        "attendance": "Attendance",
+        "views": "Views",
+        "registrations": "Registrations",
+        "perAttendee": "per attendee",
+        "capacityPercentage": "% capacity",
+        "conversionRate": "% conversion rate",
+        "showedUp": "% showed up",
+        "pendingEvent": "Pending event",
+        "noRegistrations": "No registrations"
+    },
+    "invoices": {
+        "latestInvoices": "Latest Invoices",
+        "latestInvoicesDescription": "Latest {{count}} invoices processed in your account",
+        "invoice": "Invoice",
+        "customer": "Customer",
+        "amount": "Amount",
+        "status": "Status",
+        "paid": "paid",
+        "pending": "pending",
+        "overdue": "overdue"
+    },
+    "pagination": {
+        "previous": "Previous",
+        "next": "Next",
+        "page": "Page {{current}} of {{total}}"
+    },
+    "status": {
+        "upcoming": "upcoming",
+        "ongoing": "ongoing",
+        "completed": "completed",
+        "cancelled": "cancelled"
+    },
+    "app": {
+        "brand": "EventDash",
+        "professional": "Professional",
+        "admin": "Admin"
+    }
+}

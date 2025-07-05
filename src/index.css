@@ -189,4 +189,52 @@
       background-position: -200% 0;
     }
   }
+  
+  /* Dashboard card shadow and hover */
+  .dashboard-card {
+    @apply bg-card rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200;
+  }
+  
+  /* Dashboard section spacing */
+  .dashboard-section {
+    @apply mb-8;
+  }
+  
+  /* Dashboard table */
+  .dashboard-table th, .dashboard-table td {
+    @apply px-4 py-2;
+  }
+  
+  .dashboard-table th {
+    @apply bg-muted text-muted-foreground font-semibold;
+  }
+  
+  .dashboard-table tr {
+    @apply border-b last:border-0;
+  }
+  
+  /* Dashboard pagination */
+  .dashboard-pagination-btn {
+    @apply px-3 py-1 border rounded bg-white hover:bg-muted transition-colors duration-150 disabled:opacity-50;
+  }
+  
+  /* Dashboard badge */
+  .dashboard-badge {
+    @apply rounded px-2 py-0.5 text-xs font-medium;
+  }
+  
+  /* Dashboard progress bar */
+  .dashboard-progress {
+    @apply h-2 rounded-full bg-muted;
+  }
+  
+  /* Dashboard section title */
+  .dashboard-section-title {
+    @apply text-lg font-semibold text-gray-900 mb-4;
+  }
+  
+  /* Dashboard grid */
+  .dashboard-grid {
+    @apply grid gap-6;
+  }
 }

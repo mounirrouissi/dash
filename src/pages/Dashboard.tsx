@@ -13,6 +13,7 @@ import {
     Users
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from 'react-i18next';
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,6 +79,8 @@ const formatDisplayDate = (dateString: string): string => {
 };
 
 export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { // Export as named function
+    const { t } = useTranslation();
+
     // *** State for fetched dashboard data and loading/error states ***
     const [dashboardData, setDashboardData] = useState<DashboardMetrics>(initialDashboardMetrics);
     const [recentInvoicesData, setRecentInvoicesData] = useState<Invoice[]>(initialInvoices);
@@ -155,11 +158,26 @@ export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { // Exp
         if (!searchTerm) return sortedEvents;
         const lower = searchTerm.toLowerCase();
         return sortedEvents.filter(event =>
-            event.name.toLowerCase().includes(lower) ||
-            event.location.toLowerCase().includes(lower) ||
-            event.category.toLowerCase().includes(lower)
+            event?.name?.toLowerCase().includes(lower) ||
+            event?.location?.toLowerCase().includes(lower) ||
+            event?.category?.toLowerCase().includes(lower)
         );
     }, [sortedEvents, searchTerm]);
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const EVENTS_PER_PAGE = 5;
+    const totalPages = Math.ceil(filteredEvents.length / EVENTS_PER_PAGE);
+
+    // Reset to first page when search or sort changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, sortKey, sortOrder]);
+
+    const pagedEvents = React.useMemo(() => {
+        const start = (currentPage - 1) * EVENTS_PER_PAGE;
+        return filteredEvents.slice(start, start + EVENTS_PER_PAGE);
+    }, [filteredEvents, currentPage]);
 
     // *** Fetch dashboard metrics, recent invoices, and events on component mount ***
     useEffect(() => {
@@ -193,29 +211,29 @@ export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { // Exp
     // --- Prepare stats array dynamically from fetched data ---
     const stats = [
         {
-            title: "Total Revenue",
-            value: isLoadingMetrics ? "Loading..." : formatCurrency(dashboardData.totalRevenue.currentValue),
+            title: t('statistics.totalRevenue'),
+            value: isLoadingMetrics ? t('dashboard.loading') : formatCurrency(dashboardData.totalRevenue.currentValue),
             icon: CircleDollarSign,
             changePercentage: dashboardData.totalRevenue.changePercentage ?? null,
             trend: dashboardData.totalRevenue.trend,
         },
         {
-            title: "Tickets Sold",
-            value: isLoadingMetrics ? "Loading..." : dashboardData.ticketsSold.currentValue.toLocaleString(),
+            title: t('statistics.ticketsSold'),
+            value: isLoadingMetrics ? t('dashboard.loading') : dashboardData.ticketsSold.currentValue.toLocaleString(),
             icon: TicketIcon,
             changePercentage: dashboardData.ticketsSold.changePercentage,
             trend: dashboardData.ticketsSold.trend,
         },
         {
-            title: "Customers",
-            value: isLoadingMetrics ? "Loading..." : dashboardData.customers.currentValue.toLocaleString(),
+            title: t('statistics.customers'),
+            value: isLoadingMetrics ? t('dashboard.loading') : dashboardData.customers.currentValue.toLocaleString(),
             icon: Users,
             changePercentage: dashboardData.customers.changePercentage,
             trend: dashboardData.customers.trend,
         },
         {
-            title: "Pending Invoices",
-            value: isLoadingMetrics ? "Loading..." : dashboardData.pendingInvoices?.currentValue.toLocaleString() || "0", // Handle undefined
+            title: t('statistics.pendingInvoices'),
+            value: isLoadingMetrics ? t('dashboard.loading') : dashboardData.pendingInvoices?.currentValue.toLocaleString() || "0", // Handle undefined
             icon: Clock,
             changePercentage: dashboardData.pendingInvoices?.changePercentage ?? null, // Handle undefined
             trend: dashboardData.pendingInvoices?.trend ?? "neutral", // Handle undefined
@@ -225,7 +243,7 @@ export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { // Exp
     // Helper function to render metric value with loading state and formatting
     const renderMetricValue = (value: number | string, format?: "currency" | "number"): React.ReactNode => {
         if (isLoading) {
-            return <div className="text-2xl font-bold text-muted-foreground">Loading...</div>;
+            return <div className="text-2xl font-bold text-muted-foreground">{t('dashboard.loading')}</div>;
         }
         if (format === "currency") {
             return <div className="text-2xl font-bold">{typeof value === 'number' ? formatCurrency(value) : value}</div>;
@@ -236,7 +254,7 @@ export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { // Exp
     // Helper function to render metric change percentage with loading state
     const renderMetricChange = (changePercentage: number | null, trend: string): React.ReactNode => {
         if (isLoading) {
-            return <p className="text-xs text-muted-foreground">Loading change...</p>;
+            return <p className="text-xs text-muted-foreground">{t('statistics.loadingChange')}</p>;
         }
 
         if (changePercentage === null) {
@@ -258,184 +276,196 @@ export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { // Exp
         return (
             <p className="text-xs text-muted-foreground flex items-center gap-1">
                 {trendIcon}
-                <span className={trendClass}>{formattedChange}</span> from last month
+                <span className={trendClass}>{formattedChange}</span> {t('statistics.fromLastMonth')}
             </p>
         );
     };
 
     return (
-        <div className="space-y-6"> {/* Removed redundant header/layout */}
+        <div className="space-y-10 dashboard-content">
             {/* Overall Error Display */}
             {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
-                    <span className="font-semibold text-red-800">Error!</span> {error}
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6" role="alert">
+                    <span className="font-semibold text-red-800">{t('dashboard.error')}</span> {error}
                 </div>
             )}
-
             {/* Global Statistics */}
-            <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Global Statistics</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <section className="dashboard-section">
+                <h2 className="dashboard-section-title">{t('dashboard.globalStatistics')}</h2>
+                <div className="dashboard-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
                     {stats.map((stat, i) => (
-                        <Card key={i} className="overflow-hidden">
+                        <Card key={i} className="dashboard-card">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
                                 <stat.icon className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                {renderMetricValue(stat.value, stat.title === "Total Revenue" ? "currency" : "number")}
+                                {renderMetricValue(stat.value, stat.title === t('statistics.totalRevenue') ? "currency" : "number")}
                                 {renderMetricChange(Number(stat.changePercentage), stat.trend)}
                             </CardContent>
                         </Card>
                     ))}
                 </div>
-            </div>
-
+            </section>
             {/* Events List */}
-            <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Event Statistics</h2>
-                {/* Sorting Controls */}
+            <section className="dashboard-section">
+                <h2 className="dashboard-section-title">{t('dashboard.eventStatistics')}</h2>
                 <div className="flex items-center gap-2 mb-4">
-                    <label className="text-sm font-medium">Sort by:</label>
+                    <label className="text-sm font-medium">{t('events.sortBy')}</label>
                     <select
                         className="border rounded px-2 py-1"
                         value={sortKey}
                         onChange={e => setSortKey(e.target.value as SortKey)}
                     >
                         {sortOptions.map(option => (
-                            <option key={option} value={option}>{option.charAt(0).toUpperCase() + option.slice(1)}</option>
+                            <option key={option} value={option}>{t(`events.${option}`)}</option>
                         ))}
                     </select>
                     <button
                         className="ml-2 px-2 py-1 border rounded"
                         onClick={() => setSortOrder(order => (order === "asc" ? "desc" : "asc"))}
-                        title="Toggle sort order"
+                        title={t('events.toggleSort')}
                     >
                         {sortOrder === "asc" ? "↑" : "↓"}
                     </button>
                 </div>
                 {isLoading ? (
-                    <div className="text-center py-8 text-muted-foreground">Loading events...</div>
+                    <div className="text-center py-8 text-muted-foreground">{t('dashboard.loadingEvents')}</div>
                 ) : error ? (
-                    <div className="text-center py-8 text-red-600">Error loading events: {error}</div>
-                ) : eventsData.events.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">No events found.</div>
+                    <div className="text-center py-8 text-red-600">{t('dashboard.errorLoadingEvents')} {error}</div>
+                ) : filteredEvents.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">{t('dashboard.noEvents')}</div>
                 ) : (
-                    <div className="grid gap-6">
-                        {/* Sort events before mapping */}
-                        {filteredEvents.map((event) => (
-                            <Card key={event.date + event.attendees + event.id} className="overflow-hidden">
-                                <CardHeader>
-                                    <div className="flex items-start justify-between">
-                                        <div className="space-y-1">
-                                            <CardTitle className="text-xl">{event.name}</CardTitle>
-                                            <CardDescription className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                <span className="flex items-center gap-1">
-                                                    <Clock className="h-4 w-4" />
-                                                    {formatDate(event.date)}
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <MapPin className="h-4 w-4" />
-                                                    {event.location}
-                                                </span>
-                                            </CardDescription>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="secondary">{event.category}</Badge>
-                                            <Badge className={getStatusColor(event.status)}>{event.status}</Badge>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                        {/* Attendance */}
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between text-sm">
-                                                <span className="text-muted-foreground">Attendance</span>
-                                                <span className="font-medium">
-                                                    {event.attendees} / {event.capacity}
-                                                </span>
+                    <>
+                        <div className="dashboard-grid">
+                            {pagedEvents.map((event) => (
+                                <Card key={event.date + event.attendees + event.id} className="dashboard-card">
+                                    <CardHeader>
+                                        <div className="flex items-start justify-between">
+                                            <div className="space-y-1">
+                                                <CardTitle className="text-xl">{event.name}</CardTitle>
+                                                <CardDescription className="flex items-center gap-4 text-sm text-muted-foreground">
+                                                    <span className="flex items-center gap-1">
+                                                        <Clock className="h-4 w-4" />
+                                                        {formatDate(event.date)}
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <MapPin className="h-4 w-4" />
+                                                        {event.location}
+                                                    </span>
+                                                </CardDescription>
                                             </div>
-                                            <Progress value={event.capacity > 0 ? (event.attendees / event.capacity) * 100 : 0} className="h-2" />
-                                            <div className="text-xs text-muted-foreground">
-                                                {event.capacity > 0 ? ((event.attendees / event.capacity) * 100).toFixed(1) : "0"}% capacity
-                                            </div>
-                                        </div>
-
-                                        {/* Revenue */}
-                                        <div className="space-y-2">
                                             <div className="flex items-center gap-2">
-                                                <CircleDollarSign className="h-4 w-4 text-green-600" />
-                                                <span className="text-sm text-muted-foreground">Revenue</span>
-                                            </div>
-                                            <div className="text-2xl font-bold text-green-600">{formatCurrency(event.revenue)}</div>
-                                            <div className="text-xs text-muted-foreground">
-                                                {event.attendees > 0 ? formatCurrency(event.revenue / event.attendees) : "$0"} per attendee
+                                                <Badge variant="secondary" className="dashboard-badge">{event.category}</Badge>
+                                                <Badge className={`dashboard-badge ${getStatusColor(event.status)}`}>{t(`${event.status}`)}</Badge>
                                             </div>
                                         </div>
-
-                                        {/* Views */}
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2">
-                                                <Eye className="h-4 w-4 text-blue-600" />
-                                                <span className="text-sm text-muted-foreground">Views</span>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                            {/* Attendance */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between text-sm">
+                                                    <span className="text-muted-foreground">{t('events.attendance')}</span>
+                                                    <span className="font-medium">
+                                                        {event.attendees} / {event.capacity}
+                                                    </span>
+                                                </div>
+                                                <Progress value={event.capacity > 0 ? (event.attendees / event.capacity) * 100 : 0} className="dashboard-progress" />
+                                                <div className="text-xs text-muted-foreground">
+                                                    {event.capacity > 0 ? ((event.attendees / event.capacity) * 100).toFixed(1) : "0"}{t('events.capacityPercentage')}
+                                                </div>
                                             </div>
-                                            <div className="text-2xl font-bold text-blue-600">{event.attendees.toLocaleString()}</div>
-                                            <div className="text-xs text-muted-foreground">
-                                                {event.attendees > 0 ? ((event.attendees / event.attendees) * 100).toFixed(1) : "0"}% conversion rate
+                                            {/* Revenue */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <CircleDollarSign className="h-4 w-4 text-green-600" />
+                                                    <span className="text-sm text-muted-foreground">{t('events.revenue')}</span>
+                                                </div>
+                                                <div className="text-2xl font-bold text-green-600">{formatCurrency(event.revenue)}</div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {event.attendees > 0 ? formatCurrency(event.revenue / event.attendees) : "$0"} {t('events.perAttendee')}
+                                                </div>
+                                            </div>
+                                            {/* Views */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Eye className="h-4 w-4 text-blue-600" />
+                                                    <span className="text-sm text-muted-foreground">{t('events.views')}</span>
+                                                </div>
+                                                <div className="text-2xl font-bold text-blue-600">{event.attendees.toLocaleString()}</div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {event.attendees > 0 ? ((event.attendees / event.attendees) * 100).toFixed(1) : "0"}{t('events.conversionRate')}
+                                                </div>
+                                            </div>
+                                            {/* Registrations */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <UserCheck className="h-4 w-4 text-purple-600" />
+                                                    <span className="text-sm text-muted-foreground">{t('events.registrations')}</span>
+                                                </div>
+                                                <div className="text-2xl font-bold text-purple-600">{(event.attendees ?? 0).toLocaleString()}</div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {event.status === "completed" && event.attendees > 0
+                                                        ? `${((event.attendees / event.attendees) * 100).toFixed(1)}${t('events.showedUp')}`
+                                                        : event.status === "upcoming"
+                                                            ? t('events.pendingEvent')
+                                                            : t('events.noRegistrations')}
+                                                </div>
                                             </div>
                                         </div>
-
-                                        {/* Registrations */}
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2">
-                                                <UserCheck className="h-4 w-4 text-purple-600" />
-                                                <span className="text-sm text-muted-foreground">Registrations</span>
-                                            </div>
-                                            <div className="text-2xl font-bold text-purple-600">{(event.attendees ?? 0).toLocaleString()}</div>
-                                            <div className="text-xs text-muted-foreground">
-                                                {event.status === "completed" && event.attendees > 0
-                                                    ? `${((event.attendees / event.attendees) * 100).toFixed(1)}% showed up`
-                                                    : event.status === "upcoming"
-                                                        ? "Pending event"
-                                                        : "No registrations"}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                        {/* Pagination controls */}
+                        <div className="flex justify-center items-center gap-2 mt-6">
+                            <button
+                                className="dashboard-pagination-btn"
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                {t('pagination.previous')}
+                            </button>
+                            <span className="text-sm">{t('pagination.page', { current: currentPage, total: totalPages })}</span>
+                            <button
+                                className="dashboard-pagination-btn"
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                {t('pagination.next')}
+                            </button>
+                        </div>
+                    </>
                 )}
-            </div>
-
+            </section>
             {/* Recent Invoices Table */}
-            <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Recent Invoices</h2>
-                <Card className="overflow-hidden">
+            <section className="dashboard-section">
+                <h2 className="dashboard-section-title">{t('dashboard.recentInvoices')}</h2>
+                <Card className="dashboard-card overflow-hidden">
                     <CardHeader>
-                        <CardTitle className="text-lg">Latest Invoices</CardTitle>
+                        <CardTitle className="text-lg">{t('invoices.latestInvoices')}</CardTitle>
                         <CardDescription>
-                            Latest {recentInvoicesData.length > 0 ? recentInvoicesData.length : "5"} invoices processed in your account
+                            {t('invoices.latestInvoicesDescription', { count: recentInvoicesData.length > 0 ? recentInvoicesData.length : 5 })}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         {isLoading ? (
-                            <div className="text-center py-8 text-muted-foreground">Loading recent invoices...</div>
+                            <div className="text-center py-8 text-muted-foreground">{t('dashboard.loadingInvoices')}</div>
                         ) : error ? (
-                            <div className="text-center py-8 text-red-600">Error loading invoices: {error}</div>
+                            <div className="text-center py-8 text-red-600">{t('dashboard.errorLoadingInvoices')} {error}</div>
                         ) : recentInvoicesData.length === 0 ? (
-                            <div className="text-center py-8 text-muted-foreground">No recent invoices found.</div>
+                            <div className="text-center py-8 text-muted-foreground">{t('dashboard.noInvoices')}</div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <Table>
+                                <Table className="dashboard-table">
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead className="font-semibold">Invoice</TableHead>
-                                            <TableHead className="font-semibold">Customer</TableHead>
-                                            <TableHead className="font-semibold">Date</TableHead>
-                                            <TableHead className="font-semibold">Amount</TableHead>
-                                            <TableHead className="font-semibold">Status</TableHead>
+                                            <TableHead className="font-semibold">{t('invoices.invoice')}</TableHead>
+                                            <TableHead className="font-semibold">{t('invoices.customer')}</TableHead>
+                                            <TableHead className="font-semibold">{t('events.date')}</TableHead>
+                                            <TableHead className="font-semibold">{t('invoices.amount')}</TableHead>
+                                            <TableHead className="font-semibold">{t('invoices.status')}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -454,8 +484,9 @@ export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { // Exp
                                                                     ? "secondary"
                                                                     : "destructive"
                                                         }
+                                                        className="dashboard-badge"
                                                     >
-                                                        {invoice.status}
+                                                        {t(`invoices.${invoice.status}`)}
                                                     </Badge>
                                                 </TableCell>
                                             </TableRow>
@@ -466,7 +497,7 @@ export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { // Exp
                         )}
                     </CardContent>
                 </Card>
-            </div>
+            </section>
         </div>
     );
 }

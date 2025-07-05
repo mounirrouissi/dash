@@ -11,19 +11,21 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider
+  SidebarProvider,
+  SidebarRail
 } from "@/components/ui/sidebar";
 import {
   ChevronLeft,
   ChevronRight,
-  FileText, // For quick actions
+  FileText,
+  Globe, // For quick actions
   Home,
   Menu,
   Search,
-  Settings,
-  X
+  Settings
 } from "lucide-react";
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Route,
   BrowserRouter as Router,
@@ -39,13 +41,13 @@ import Invoices from './pages/Invoices';
 const sidebarNavData = {
   navMain: [
     {
-      title: "Dashboard",
+      title: "navigation.dashboard",
       url: "/",
       icon: Home,
       description: "Overview and analytics",
     },
     {
-      title: "Invoices",
+      title: "navigation.invoices",
       url: "/invoices",
       icon: FileText,
 
@@ -54,7 +56,7 @@ const sidebarNavData = {
   ],
   navSecondary: [
     {
-      title: "Settings",
+      title: "navigation.settings",
       url: "/settings",
       icon: Settings,
     },
@@ -71,6 +73,7 @@ function useActiveRoute() {
 function AppContent() {
   const activeRoute = useActiveRoute();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   // Sidebar open/collapse state
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -94,6 +97,12 @@ function AppContent() {
   const toggleSidebar = () => setIsSidebarOpen((open) => !open);
   const closeSidebar = () => setIsSidebarOpen(false);
 
+  // Language toggle function
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'fr' : 'en';
+    i18n.changeLanguage(newLang);
+  };
+
   return (
     <div className="flex min-h-screen w-full bg-gray-50">
       {/* Overlay for mobile */}
@@ -104,46 +113,38 @@ function AppContent() {
         />
       )}
       {/* Sidebar */}
-      <Sidebar
+      <Sidebar collapsible="icon"
         className={`
           ${isMobile ? 'fixed' : 'relative'}
           z-50 inset-y-0 left-0
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           ${isMobile ? 'w-64' : isSidebarOpen ? 'w-64' : 'w-16'}
           transition-all duration-300 ease-in-out
           border-r border-gray-200 bg-white/90 backdrop-blur-xl shadow-lg
         `}
       >
-        <SidebarHeader className="border-b border-gray-200 p-4 flex justify-between items-center h-16">
-          <div className={`flex items-center space-x-2 ${!isSidebarOpen && !isMobile ? 'justify-center' : ''}`}>
-            {(isSidebarOpen || isMobile) && (
-              <span className="text-lg font-semibold text-gray-900">EventDash</span>
-            )}
-          </div>
-          {/* Toggle button */}
-          <button
-            onClick={toggleSidebar}
-            className="p-1 h-4 w-10 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
-            style={{ marginLeft: 'auto' }} // <-- Add this line
-          >
-            {isMobile ? (
-              <X className="h-5 w-5" />
-            ) : isSidebarOpen ? (
-              <ChevronLeft className="h-5 w-5" />
-            ) : (
-              <ChevronRight className="h-5 w-5" />
-            )}
-          </button>
-        </SidebarHeader>
-        <SidebarContent className="p-4 flex-1 overflow-y-auto">
-          {/* Search - only show when sidebar is open */}
-          {(isSidebarOpen || isMobile) && (
-            <form className="mb-4">
+        <SidebarHeader>
+          {/* Profile section at the top */}
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" asChild>
+                <a href="/">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                    <Home className="size-4" />
+                  </div>
+
+
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+          {/* Search input */}
+          {isSidebarOpen && (
+            <form>
               <SidebarGroup className="py-0">
                 <SidebarGroupContent className="relative">
-                  <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 select-none opacity-50" />
+                  <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
                   <SidebarInput
-                    placeholder="Search events..."
+                    placeholder={t('navigation.search')}
                     className="pl-8"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
@@ -152,9 +153,11 @@ function AppContent() {
               </SidebarGroup>
             </form>
           )}
+        </SidebarHeader>
+        <SidebarContent>
           {/* Main Navigation */}
           <SidebarGroup>
-            {(isSidebarOpen || isMobile) && <SidebarGroupLabel>Main</SidebarGroupLabel>}
+            {isSidebarOpen && <SidebarGroupLabel>Main</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
                 {sidebarNavData.navMain.map((item) => (
@@ -163,11 +166,10 @@ function AppContent() {
                       asChild
                       isActive={activeRoute === item.url}
                       onClick={() => handleNavigation(item.url)}
-                      className={`${!isSidebarOpen && !isMobile ? 'justify-center px-2' : ''}`}
                     >
-                      <a href={item.url} className="flex items-center">
-                        <item.icon className={`h-5 w-5 ${(isSidebarOpen || isMobile) ? 'mr-3' : ''}`} />
-                        {(isSidebarOpen || isMobile) && <span>{item.title}</span>}
+                      <a href={item.url}>
+                        <item.icon className="size-4" />
+                        {isSidebarOpen && <span>{t(item.title)}</span>}
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -176,8 +178,8 @@ function AppContent() {
             </SidebarGroupContent>
           </SidebarGroup>
           {/* Secondary Navigation */}
-          <SidebarGroup className="mt-6">
-            {(isSidebarOpen || isMobile) && <SidebarGroupLabel>Tools</SidebarGroupLabel>}
+          <SidebarGroup>
+            {isSidebarOpen && <SidebarGroupLabel>Tools</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
                 {sidebarNavData.navSecondary.map((item) => (
@@ -186,11 +188,10 @@ function AppContent() {
                       asChild
                       isActive={activeRoute === item.url}
                       onClick={() => handleNavigation(item.url)}
-                      className={`${!isSidebarOpen && !isMobile ? 'justify-center px-2' : ''}`}
                     >
-                      <a href={item.url} className="flex items-center">
-                        <item.icon className={`h-5 w-5 ${(isSidebarOpen || isMobile) ? 'mr-3' : ''}`} />
-                        {(isSidebarOpen || isMobile) && <span>{item.title}</span>}
+                      <a href={item.url}>
+                        <item.icon className="size-4" />
+                        {isSidebarOpen && <span>{t(item.title)}</span>}
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -198,32 +199,74 @@ function AppContent() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+          {/* Quick Actions */}
+          <SidebarGroup>
+            {isSidebarOpen && <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/events/create">
+                      <FileText className="size-4" />
+                      {isSidebarOpen && <span>{t('navigation.createEvent')}</span>}
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/invoices/create">
+                      <FileText className="size-4" />
+                      {isSidebarOpen && <span>{t('navigation.newInvoice')}</span>}
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter className="border-t border-gray-200 p-4 mt-auto">
+        <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild className={`${!isSidebarOpen && !isMobile ? 'justify-center px-2' : ''}`}>
+              <SidebarMenuButton size="lg" asChild>
                 <a href="/profile">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-blue-500 text-white">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-accent-foreground">
                     <span className="text-sm font-medium">JD</span>
                   </div>
-                  {(isSidebarOpen || isMobile) && (
-                    <>
-                      <div className="grid flex-1 text-left text-sm leading-tight ml-3">
-                        <span className="truncate font-semibold">John Doe</span>
-                        <span className="truncate text-xs text-gray-500">Admin</span>
-                      </div>
-                      <Settings className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                    </>
+                  {isSidebarOpen && (
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold">John Doe</span>
+                      <span className="truncate text-xs">john@example.com</span>
+                    </div>
                   )}
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
+        <SidebarRail />
       </Sidebar>
+
+      {/* Sidebar Toggle Button - positioned outside sidebar */}
+      {!isMobile && (
+        <button
+          onClick={toggleSidebar}
+          className="fixed top-4 z-50 p-2 rounded-full bg-white border border-gray-200 shadow-lg hover:bg-gray-50 transition-all duration-200 ease-in-out"
+          style={{
+            left: isSidebarOpen ? '248px' : '56px', // Position based on sidebar width
+            transform: 'translateX(-50%)'
+          }}
+          title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+        >
+          {isSidebarOpen ? (
+            <ChevronLeft className="h-4 w-4 text-gray-600" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-gray-600" />
+          )}
+        </button>
+      )}
+
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden lg:ml-64">
+      <div className={`flex-1 flex flex-col overflow-hidden ${!isMobile && isSidebarOpen ? 'lg:ml-64' : !isMobile ? 'lg:ml-16' : ''}`}>
         {/* Header */}
         <header className="flex h-16 items-center gap-4 border-b bg-white/80 backdrop-blur-xl px-4 sm:px-6 lg:px-8 sticky top-0 z-20 shadow-sm">
           {/* Mobile menu button */}
@@ -243,20 +286,28 @@ function AppContent() {
             </button>
           )}
           <h1 className="text-xl font-semibold text-gray-900 capitalize">
-            {activeRoute === "/" ? "Dashboard" : activeRoute === "/invoices" ? "Invoices" : "Page"}
+            {activeRoute === "/" ? t('dashboard.title') : activeRoute === "/invoices" ? t('navigation.invoices') : "Page"}
           </h1>
           <div className="flex items-center space-x-4 ml-auto">
-            {isMobile && <div className="relative hidden sm:block">
+            <div className="relative hidden sm:block">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder={t('navigation.searchHeader')}
                 className="w-full rounded-lg border border-gray-300 bg-gray-100 px-8 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
-            </div>}
+            </div>
             <div className="h-6 w-px bg-gray-300"></div>
+            {/* Language Toggle Button */}
+            <button
+              onClick={toggleLanguage}
+              className="p-2 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+              title={`Switch to ${i18n.language === 'en' ? 'French' : 'English'}`}
+            >
+              <Globe className="h-5 w-5" />
+            </button>
           </div>
         </header>
         {/* Main Page Content */}

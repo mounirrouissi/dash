@@ -1,0 +1,33 @@
+/* Dashboard main layout */
+.dashboard-main {
+  min-height: 100vh;
+  background: var(--background);
+  display: flex;
+}
+.dashboard-sidebar {
+  background: hsl(var(--sidebar-background));
+  color: hsl(var(--sidebar-foreground));
+  min-width: 64px;
+  transition: width 0.2s;
+}
+.dashboard-content {
+  flex: 1;
+  padding: 2rem 1rem;
+  background: var(--background);
+}
+.dashboard-header {
+  background: hsl(var(--card));
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+@media (max-width: 1024px) {
+  .dashboard-content {
+    padding: 1rem 0.5rem;
+  }
+  .dashboard-header {
+    padding: 0.5rem 1rem;
+  }
+}

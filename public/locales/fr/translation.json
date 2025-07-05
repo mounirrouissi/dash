@@ -1,0 +1,78 @@
+{
+    "navigation": {
+        "dashboard": "Tableau de bord",
+        "invoices": "Factures",
+        "settings": "Paramètres",
+        "search": "Rechercher des événements...",
+        "searchHeader": "Rechercher...",
+        "profile": "Profil",
+        "createEvent": "Créer un événement",
+        "newInvoice": "Nouvelle facture"
+    },
+    "dashboard": {
+        "title": "Tableau de bord",
+        "globalStatistics": "Statistiques globales",
+        "eventStatistics": "Statistiques des événements",
+        "recentInvoices": "Factures récentes",
+        "loading": "Chargement...",
+        "error": "Erreur !",
+        "noEvents": "Aucun événement trouvé.",
+        "noInvoices": "Aucune facture récente trouvée.",
+        "loadingEvents": "Chargement des événements...",
+        "loadingInvoices": "Chargement des factures récentes...",
+        "errorLoadingEvents": "Erreur lors du chargement des événements :",
+        "errorLoadingInvoices": "Erreur lors du chargement des factures :"
+    },
+    "statistics": {
+        "totalRevenue": "Revenus totaux",
+        "ticketsSold": "Billets vendus",
+        "customers": "Clients",
+        "pendingInvoices": "Factures en attente",
+        "fromLastMonth": "du mois dernier",
+        "loadingChange": "Chargement du changement..."
+    },
+    "events": {
+        "sortBy": "Trier par :",
+        "date": "Date",
+        "revenue": "Revenus",
+        "attendees": "Participants",
+        "capacity": "Capacité",
+        "toggleSort": "Basculer l'ordre de tri",
+        "attendance": "Présence",
+        "views": "Vues",
+        "registrations": "Inscriptions",
+        "perAttendee": "par participant",
+        "capacityPercentage": "% de capacité",
+        "conversionRate": "% de taux de conversion",
+        "showedUp": "% sont venus",
+        "pendingEvent": "Événement en attente",
+        "noRegistrations": "Aucune inscription"
+    },
+    "invoices": {
+        "latestInvoices": "Dernières factures",
+        "latestInvoicesDescription": "Dernières {{count}} factures traitées dans votre compte",
+        "invoice": "Facture",
+        "customer": "Client",
+        "amount": "Montant",
+        "status": "Statut",
+        "paid": "payée",
+        "pending": "en attente",
+        "overdue": "en retard"
+    },
+    "pagination": {
+        "previous": "Précédent",
+        "next": "Suivant",
+        "page": "Page {{current}} sur {{total}}"
+    },
+    "status": {
+        "upcoming": "à venir",
+        "ongoing": "en cours",
+        "completed": "terminé",
+        "cancelled": "annulé"
+    },
+    "app": {
+        "brand": "EventDash",
+        "professional": "Professionnel",
+        "admin": "Administrateur"
+    }
+}

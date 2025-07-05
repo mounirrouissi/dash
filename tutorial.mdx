@@ -1,0 +1,137 @@
+---
+title: "How to Add Search and Pagination to the Event List"
+---
+
+import { Info } from "lucide-react"
+
+# 🕵️‍♂️ Adding Search to the Event List
+
+## 1. Add Search State to the Parent (`App`)
+
+```tsx
+const [searchTerm, setSearchTerm] = useState("");
+```
+
+## 2. Make Search Inputs Controlled
+
+Sidebar search input:
+```tsx
+<SidebarInput
+  value={searchTerm}
+  onChange={e => setSearchTerm(e.target.value)}
+  placeholder="Search events..."
+  className="pl-8"
+/>
+```
+
+Header search input:
+```tsx
+<input
+  value={searchTerm}
+  onChange={e => setSearchTerm(e.target.value)}
+  placeholder="Search..."
+  className="..."
+/>
+```
+
+## 3. Pass Search Term to Dashboard
+
+```tsx
+<Route path="/" element={<Dashboard searchTerm={searchTerm} />} />
+```
+
+## 4. Accept and Use the Search Term in Dashboard
+
+```tsx
+export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { ... }
+```
+
+Filter the events using the search term (case-insensitive, matching name, location, or category):
+
+```tsx
+const filteredEvents = React.useMemo(() => {
+  if (!searchTerm) return sortedEvents;
+  const lower = searchTerm.toLowerCase();
+  return sortedEvents.filter(event =>
+    event.name.toLowerCase().includes(lower) ||
+    event.location.toLowerCase().includes(lower) ||
+    event.category.toLowerCase().includes(lower)
+  );
+}, [sortedEvents, searchTerm]);
+```
+
+Use `filteredEvents` instead of the full event list when rendering.
+
+---
+
+# 📄 Adding Pagination to the Event List
+
+## 1. Add Pagination State
+
+```tsx
+const [currentPage, setCurrentPage] = useState(1);
+const EVENTS_PER_PAGE = 5;
+```
+
+## 2. Calculate Total Pages
+
+```tsx
+const totalPages = Math.ceil(filteredEvents.length / EVENTS_PER_PAGE);
+```
+
+## 3. Reset Page on Search/Sort Change
+
+```tsx
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchTerm, sortKey, sortOrder]);
+```
+
+## 4. Slice Events for the Current Page
+
+```tsx
+const pagedEvents = React.useMemo(() => {
+  const start = (currentPage - 1) * EVENTS_PER_PAGE;
+  return filteredEvents.slice(start, start + EVENTS_PER_PAGE);
+}, [filteredEvents, currentPage]);
+```
+
+## 5. Render Only the Current Page
+
+```tsx
+{pagedEvents.map(event => (
+  // ...render event card...
+))}
+```
+
+## 6. Add Pagination Controls
+
+```tsx
+<div className="flex justify-center items-center gap-2 mt-6">
+  <button
+    className="px-3 py-1 border rounded disabled:opacity-50"
+    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+    disabled={currentPage === 1}
+  >
+    Previous
+  </button>
+  <span className="text-sm">Page {currentPage} of {totalPages}</span>
+  <button
+    className="px-3 py-1 border rounded disabled:opacity-50"
+    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+    disabled={currentPage === totalPages}
+  >
+    Next
+  </button>
+</div>
+```
+
+---
+
+# ✅ Summary
+
+- **Search:** Add a search state, control both search inputs, pass the term to `Dashboard`, and filter events before rendering.
+- **Pagination:** Add page state, calculate total pages, reset on search/sort, slice the filtered events, and add navigation controls.
+
+<Info size={18} className="inline-block mr-1" />  
+_You can copy-paste these code blocks into your project as needed!_
