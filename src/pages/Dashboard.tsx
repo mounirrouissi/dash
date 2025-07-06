@@ -307,7 +307,7 @@ export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { // Exp
                     ))}
                 </div>
             </section>
-            {/* Events List */}
+            {/* Events List,  */}
             <section className="dashboard-section">
                 <h2 className="dashboard-section-title">{t('dashboard.eventStatistics')}</h2>
                 <div className="flex items-center gap-2 mb-4">
@@ -365,8 +365,13 @@ export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { // Exp
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                             {/* Attendance */}
                                             <div className="space-y-2">
+
+
                                                 <div className="flex items-center justify-between text-sm">
-                                                    <span className="text-muted-foreground">{t('events.attendance')}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <UserCheck className="h-4 w-4 text-purple-600" />
+                                                        <span className="text-muted-foreground">{t('events.attendance')}</span>
+                                                    </div>
                                                     <span className="font-medium">
                                                         {event.attendees} / {event.capacity}
                                                     </span>

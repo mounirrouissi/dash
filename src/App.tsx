@@ -251,7 +251,7 @@ function AppContent() {
           onClick={toggleSidebar}
           className="fixed top-4 z-50 p-2 rounded-full bg-white border border-gray-200 shadow-lg hover:bg-gray-50 transition-all duration-200 ease-in-out"
           style={{
-            left: isSidebarOpen ? '248px' : '56px', // Position based on sidebar width
+            left: isSidebarOpen ? '248px' : '66px', // Position based on sidebar width
             transform: 'translateX(-50%)'
           }}
           title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
@@ -259,7 +259,7 @@ function AppContent() {
           {isSidebarOpen ? (
             <ChevronLeft className="h-4 w-4 text-gray-600" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-gray-600" />
+            <ChevronRight className=" h-4 w-4 text-gray-600" />
           )}
         </button>
       )}
