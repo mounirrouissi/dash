@@ -282,51 +282,74 @@ export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { // Exp
     };
 
     return (
-        <div className="space-y-10 dashboard-content">
+        <div className="space-y-10 dashboard-content animate-fade-in-up">
             {/* Overall Error Display */}
             {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6" role="alert">
-                    <span className="font-semibold text-red-800">{t('dashboard.error')}</span> {error}
+                <div className="rounded-xl border-l-4 border-red-500 bg-gradient-to-r from-red-50 to-red-100/50 p-4 mb-6 shadow-lg" role="alert">
+                    <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div className="ml-3">
+                            <span className="font-semibold text-red-800">{t('dashboard.error')}</span>
+                            <span className="text-red-700 ml-2">{error}</span>
+                        </div>
+                    </div>
                 </div>
             )}
+            
             {/* Global Statistics */}
             <section className="dashboard-section">
-                <h2 className="dashboard-section-title">{t('dashboard.globalStatistics')}</h2>
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="h-8 w-1 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
+                    <h2 className="text-2xl font-bold gradient-text">{t('dashboard.globalStatistics')}</h2>
+                </div>
                 <div className="dashboard-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
                     {stats.map((stat, i) => (
-                        <Card key={i} className="dashboard-card">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                                <stat.icon className="h-4 w-4 text-muted-foreground" />
+                        <Card key={i} className="metric-card card-modern hover-lift interactive-hover">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                                <CardTitle className="text-sm font-medium text-gray-600">{stat.title}</CardTitle>
+                                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50">
+                                    <stat.icon className="h-5 w-5 text-blue-600" />
+                                </div>
                             </CardHeader>
                             <CardContent>
-                                {renderMetricValue(stat.value, stat.title === t('statistics.totalRevenue') ? "currency" : "number")}
-                                {renderMetricChange(Number(stat.changePercentage), stat.trend)}
+                                <div className="space-y-2">
+                                    {renderMetricValue(stat.value, stat.title === t('statistics.totalRevenue') ? "currency" : "number")}
+                                    {renderMetricChange(Number(stat.changePercentage), stat.trend)}
+                                </div>
                             </CardContent>
                         </Card>
                     ))}
                 </div>
             </section>
-            {/* Events List,  */}
+            {/* Events List */}
             <section className="dashboard-section">
-                <h2 className="dashboard-section-title">{t('dashboard.eventStatistics')}</h2>
-                <div className="flex items-center gap-2 mb-4">
-                    <label className="text-sm font-medium">{t('events.sortBy')}</label>
-                    <select
-                        className="border rounded px-2 py-1"
-                        value={sortKey}
-                        onChange={e => setSortKey(e.target.value as SortKey)}
-                    >
-                        {sortOptions.map(option => (
-                            <option key={option} value={option}>{t(`events.${option}`)}</option>
-                        ))}
-                    </select>
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="h-8 w-1 bg-gradient-to-b from-green-500 to-blue-600 rounded-full"></div>
+                    <h2 className="text-2xl font-bold gradient-text">{t('dashboard.eventStatistics')}</h2>
+                </div>
+                <div className="flex items-center gap-4 mb-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200/50">
+                    <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium text-gray-700">{t('events.sortBy')}</label>
+                        <select
+                            className="search-modern px-3 py-2 text-sm font-medium focus:outline-none"
+                            value={sortKey}
+                            onChange={e => setSortKey(e.target.value as SortKey)}
+                        >
+                            {sortOptions.map(option => (
+                                <option key={option} value={option}>{t(`events.${option}`)}</option>
+                            ))}
+                        </select>
+                    </div>
                     <button
-                        className="ml-2 px-2 py-1 border rounded"
+                        className="btn-gradient px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
                         onClick={() => setSortOrder(order => (order === "asc" ? "desc" : "asc"))}
                         title={t('events.toggleSort')}
                     >
-                        {sortOrder === "asc" ? "↑" : "↓"}
+                        {sortOrder === "asc" ? "↑ Ascending" : "↓ Descending"}
                     </button>
                 </div>
                 {isLoading ? (
@@ -339,25 +362,29 @@ export function Dashboard({ searchTerm = "" }: { searchTerm?: string }) { // Exp
                     <>
                         <div className="dashboard-grid">
                             {pagedEvents.map((event) => (
-                                <Card key={event.date + event.attendees + event.id} className="dashboard-card">
-                                    <CardHeader>
-                                        <div className="flex items-start justify-between">
-                                            <div className="space-y-1">
-                                                <CardTitle className="text-xl">{event.name}</CardTitle>
-                                                <CardDescription className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                    <span className="flex items-center gap-1">
-                                                        <Clock className="h-4 w-4" />
+                                <Card key={event.date + event.attendees + event.id} className="card-modern hover-lift interactive-hover group">
+                                    <CardHeader className="relative">
+                                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-t-2xl"></div>
+                                        <div className="flex items-start justify-between pt-2">
+                                            <div className="space-y-2">
+                                                <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">{event.name}</CardTitle>
+                                                <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
+                                                    <span className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded-lg">
+                                                        <Clock className="h-4 w-4 text-blue-500" />
                                                         {formatDate(event.date)}
                                                     </span>
-                                                    <span className="flex items-center gap-1">
-                                                        <MapPin className="h-4 w-4" />
+                                                    <span className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded-lg">
+                                                        <MapPin className="h-4 w-4 text-green-500" />
                                                         {event.location}
                                                     </span>
                                                 </CardDescription>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant="secondary" className="dashboard-badge">{event.category}</Badge>
-                                                <Badge className={`dashboard-badge ${getStatusColor(event.status)}`}>{t(`${event.status}`)}</Badge>
+                                            <div className="flex flex-col gap-2">
+                                                <Badge variant="secondary" className="bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-blue-200 font-medium">{event.category}</Badge>
+                                                <div className="flex items-center gap-1">
+                                                    <div className={`status-dot status-${event.status}`}></div>
+                                                    <Badge className={`${getStatusColor(event.status)} font-medium`}>{t(`${event.status}`)}</Badge>
+                                                </div>
                                             </div>
                                         </div>
                                     </CardHeader>
