@@ -22,7 +22,7 @@ interface ImportMeta {
 // ... (other imports and apiClient setup) ...
 
 // Base API URL - you can make this configurable via environment variables
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:9003/api/v1/admin/dashboard"
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:9003/api/v1/dashboard"
 
 // --- Types for Dashboard Metrics (mirroring backend DTOs) ---
 export interface MetricValue {
@@ -39,25 +39,149 @@ export interface DashboardMetrics {
 }
 
 
-
-// --- Types for Individual Events ---
 export interface EventStats {
-  id: string
+  id: number  // Changed from string to number
   name: string
-  date: string // YYYY-MM-DD format
+  date: string
   location: string
-  status: "upcoming" | "ongoing" | "completed" | "cancelled"
+  status: "ONSALE" | "PUBLISHED" | "DRAFT" | "CANCELLED" | string  // Add actual statuses
   category: string
   attendees: number
   capacity: number
   revenue: number
-  views: number
-  ticketsSold: number
+  views?: number  // Make optional since backend doesn't return it
+  ticketsSold?: number  // Make optional
+}
+
+// Spring Page response structure
+export interface SpringPageResponse<T> {
+  content: T[]
+  totalElements: number
+  totalPages: number
+  size: number
+  number: number
+  first: boolean
+  last: boolean
+  empty: boolean
 }
 
 export interface EventsResponse {
   events: EventStats[]
   totalEvents: number
+  totalPages?: number
+  currentPage?: number
+}
+
+// Helper to extract a message from unknown error-like values
+export const getErrorMessage = (error: unknown): string => {
+  if (!error) return ''
+  if (typeof error === 'string') return error
+  if (error instanceof Error) return error.message
+  try {
+    const obj = error as Record<string, unknown>
+    if (obj && typeof obj.message === 'string') return obj.message
+  } catch {
+    // ignore
+  }
+  return String(error)
+}
+
+// small access helpers that avoid `any`
+const getString = (obj: unknown, keys: string[], fallback = ''): string => {
+  if (!obj || typeof obj !== 'object') return fallback
+  for (const k of keys) {
+    const v = (obj as Record<string, unknown>)[k]
+    if (typeof v === 'string') return v
+    if (typeof v === 'number') return String(v)
+  }
+  return fallback
+}
+
+const getNumber = (obj: unknown, keys: string[], fallback = 0): number => {
+  if (!obj || typeof obj !== 'object') return fallback
+  for (const k of keys) {
+    const v = (obj as Record<string, unknown>)[k]
+    if (typeof v === 'number') return v
+    if (typeof v === 'string') {
+      const n = Number(v)
+      if (!Number.isNaN(n)) return n
+    }
+  }
+  return fallback
+}
+
+/**
+ * Fetch a single event by id using HAL+JSON response format.
+ * Endpoint: /{version}/sales/events/{eventId}
+ * @param eventId - numeric id of the event
+ * @param apiVersion - API version path segment (default: 'v1')
+ */
+export const getEventById = async (eventId: number | string, apiVersion = 'v1'): Promise<EventStats> => {
+  try {
+    const url = `${API_BASE_URL.replace('/api/v1/dashboard', '')}/${apiVersion}/sales/events/${eventId}`
+    console.log(`Requesting Event by ID URL: ${url}`)
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/hal+json',
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      let errorMessage = `Failed to fetch event ${eventId}: ${response.status} ${response.statusText}`
+      try {
+        const errorJson = await response.json()
+        if (errorJson && errorJson.message) errorMessage += ` - ${errorJson.message}`
+      } catch (err) {
+        // ignore json parse errors
+      }
+      throw new Error(errorMessage)
+    }
+
+    const data = await response.json()
+
+    // HAL responses may wrap the resource directly or under _embedded. Try to find the event resource.
+    let eventPayload: any = data
+    if (data && data._embedded) {
+      // try common keys - this is heuristic because HAL embedded collection/resource names vary
+      const keys = Object.keys(data._embedded)
+      if (keys.length === 1) {
+        eventPayload = data._embedded[keys[0]]
+      } else if (keys.includes('event')) {
+        eventPayload = data._embedded['event']
+      } else {
+        // fallback to first embedded value
+        eventPayload = data._embedded[keys[0]]
+      }
+    }
+
+    // If the embedded value is an array, pick the first element
+    if (Array.isArray(eventPayload)) {
+      eventPayload = eventPayload[0]
+    }
+
+    // Map HAL fields to EventStats where possible. Assume backend uses similar field names.
+    const mapped: EventStats = {
+      id: String(eventPayload.id ?? eventPayload.eventId ?? eventId),
+      name: eventPayload.name ?? eventPayload.title ?? '',
+      date: eventPayload.date ?? eventPayload.startDate ?? '',
+      location: eventPayload.location ?? eventPayload.venue ?? '',
+      status: (eventPayload.status ?? 'upcoming') as EventStats['status'],
+      category: eventPayload.category ?? eventPayload.type ?? '',
+      attendees: Number(eventPayload.attendees ?? eventPayload.attendeeCount ?? 0),
+      capacity: Number(eventPayload.capacity ?? eventPayload.maxCapacity ?? 0),
+      revenue: Number(eventPayload.revenue ?? eventPayload.totalRevenue ?? 0),
+      views: Number(eventPayload.views ?? 0),
+      ticketsSold: Number(eventPayload.ticketsSold ?? eventPayload.sold ?? 0),
+    }
+
+    return mapped
+  } catch (error: any) {
+    console.error(`Error fetching event ${eventId}:`, error)
+    throw new Error(error?.message || `An unexpected error occurred while fetching event ${eventId}`)
+  }
 }
 
 /**
@@ -71,6 +195,7 @@ export const getDashboardMetrics = async (period?: string): Promise<DashboardMet
     const url = `${API_BASE_URL}/metrics${params ? "?" + params : ""}`
 
     console.log(`Requesting Dashboard Metrics URL: ${url}`)
+
 
     const response = await fetch(url, {
       method: "GET",
@@ -94,9 +219,11 @@ export const getDashboardMetrics = async (period?: string): Promise<DashboardMet
 
     const data: DashboardMetrics = await response.json()
     return data
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching dashboard metrics:", error)
-    throw new Error(error.message || "An unexpected error occurred while fetching metrics.")
+    // error may be unknown; stringify safely
+    const message = (error && typeof error === 'object' && 'message' in error) ? (error as any).message : String(error)
+    throw new Error(message || "An unexpected error occurred while fetching metrics.")
   }
 }
 
@@ -104,9 +231,12 @@ export const getDashboardMetrics = async (period?: string): Promise<DashboardMet
  * Fetches recent invoices.
  * @param limit - Number of recent invoices to fetch (defaults to 5).
  */
-export const getRecentInvoices = async (limit = 5): Promise<Invoice[]> => {
+export const getRecentInvoices = async (page = 0, size = 5): Promise<Invoice[]> => {
   try {
-    const params = new URLSearchParams({ limit: limit.toString() }).toString()
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString()
+    }).toString()
     const url = `${API_BASE_URL}/recent-invoices?${params}`
 
     console.log(`Requesting Recent Invoices URL: ${url}`)
@@ -122,35 +252,45 @@ export const getRecentInvoices = async (limit = 5): Promise<Invoice[]> => {
       let errorMessage = `Failed to fetch recent invoices: ${response.status} ${response.statusText}`
       try {
         const errorJson = await response.json()
-        if (errorJson.message) errorMessage += ` - ${errorJson.message}`
-      } catch (e) {
-        // Ignore
+        if (errorJson && (errorJson as any).message) errorMessage += ` - ${(errorJson as any).message}`
+      } catch (_) {
+        // Ignore JSON parsing errors
       }
       throw new Error(errorMessage)
     }
 
     const data: Invoice[] = await response.json()
     return data
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching recent invoices:", error)
-    throw new Error(error.message || "An unexpected error occurred while fetching recent invoices.")
+    const message = (error && typeof error === 'object' && 'message' in error) ? (error as any).message : String(error)
+    throw new Error(message || "An unexpected error occurred while fetching recent invoices.")
   }
 }
 
 /**
- * Fetches individual event statistics.
- * @param limit - Number of events to fetch (defaults to 10).
+ * Fetches individual event statistics from the sales API endpoint.
+ * Uses the backend route: /{version}/sales/events
+ * @param page - page index (0-based)
+ * @param size - page size
  * @param status - Optional status filter ('upcoming', 'ongoing', 'completed', 'cancelled').
+ * @param apiVersion - API version path segment (e.g. 'v1')
  */
-export const getEventStats = async (limit = 10, status?: string): Promise<EventsResponse> => {
+export const getEventStats = async (
+  page = 0, 
+  size = 10, 
+  status?: string
+): Promise<EventsResponse> => {
   try {
-    const params = new URLSearchParams({ limit: limit.toString() })
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString()
+    })
     if (status) {
       params.append("status", status)
     }
 
     const url = `${API_BASE_URL}/events?${params.toString()}`
-
     console.log(`Requesting Event Stats URL: ${url}`)
 
     const response = await fetch(url, {
@@ -164,19 +304,38 @@ export const getEventStats = async (limit = 10, status?: string): Promise<Events
       let errorMessage = `Failed to fetch event statistics: ${response.status} ${response.statusText}`
       try {
         const errorJson = await response.json()
-        if (errorJson.message) errorMessage += ` - ${errorJson.message}`
-      } catch (e) {
-        // Ignore JSON parsing error if response body isn't JSON
+        if (errorJson?.message) errorMessage += ` - ${errorJson.message}`
+      } catch (_) {
+        // Ignore JSON parsing error
       }
       throw new Error(errorMessage)
     }
 
-    const data: EventsResponse = await response.json()
-    console.log("Event Stats Data:", data)
-    return data
-  } catch (error: any) {
+    // Backend returns Spring Page object
+    const pageData: SpringPageResponse<EventStats> = await response.json()
+    console.log("Event Stats Page Data:", pageData)
+
+    // Transform to your expected format
+    const transformedData: EventsResponse = {
+      events: pageData.content.map(event => ({
+        ...event,
+        id: event.id.toString(), // Convert to string if needed
+        // Add default values for missing fields
+        views: event.attendees, // Use attendees as views (as per your frontend)
+        ticketsSold: event.attendees, // Use attendees as ticketsSold
+        // Normalize status to lowercase
+        status: event.status.toLowerCase() as any
+      })),
+      totalEvents: pageData.totalElements,
+      totalPages: pageData.totalPages,
+      currentPage: pageData.number
+    }
+
+    return transformedData
+  } catch (error) {
     console.error("Error fetching event statistics:", error)
-    throw new Error(error.message || "An unexpected error occurred while fetching event statistics.")
+    const message = error instanceof Error ? error.message : String(error)
+    throw new Error(message || "An unexpected error occurred while fetching event statistics.")
   }
 }
 
@@ -197,25 +356,16 @@ export const formatCurrency = (amount: string | number | undefined): string => {
 
 // Helper to format date
 export const formatDate = (dateString: string): string => {
-  debugger
   return new Date(dateString).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
   })
 }
-/**
- * Fetches ALL invoices.
- * Assumes an endpoint like /invoices exists or /recent-invoices with limit=0/all.
- * Here, we assume a /invoices endpoint exists.
- */
+
 export const getAllInvoices = async (): Promise<Invoice[]> => { // Using Invoice type
   try {
-    // Assuming the endpoint for all invoices is '/invoices' under the admin path
-    // If your backend requires a parameter like ?limit=all or ?pagination=false, adjust the URL here.
-    // If it's a paginated endpoint, you might need to fetch multiple pages.
-    // For this example, let's assume a simple /invoices endpoint returns all data.
-    const url = `${API_BASE_URL}/invoices` // Assumed endpoint for all invoices
+    const url = `${API_BASE_URL}/invoices`
 
     console.log(`Requesting All Invoices URL: ${url}`)
 
@@ -230,18 +380,22 @@ export const getAllInvoices = async (): Promise<Invoice[]> => { // Using Invoice
       let errorMessage = `Failed to fetch all invoices: ${response.status} ${response.statusText}`
       try {
         const errorJson = await response.json()
-        if (errorJson.message) errorMessage += ` - ${errorJson.message}`
-      } catch (e) {
-        // Ignore
+        if (errorJson && typeof (errorJson as any)?.message === 'string') {
+          errorMessage += ` - ${(errorJson as any).message}`
+        }
+      } catch (parseErr) {
+        // Ignore JSON parsing error if response body isn't JSON; log if needed
+        console.debug("Ignored JSON parse error while reading error body for all invoices:", parseErr)
       }
       throw new Error(errorMessage)
     }
 
     const data: Invoice[] = await response.json()
     return data
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching all invoices:", error)
-    throw new Error(error.message || "An unexpected error occurred while fetching all invoices.")
+    const msg = getErrorMessage(error)
+    throw new Error(msg || "An unexpected error occurred while fetching all invoices.")
   }
 }
 

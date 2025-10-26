@@ -1,6 +1,6 @@
 
 
-import type * as React from "react"
+import React, { useEffect, useState } from "react"
 import {
   Calendar,
   CalendarDays,
@@ -30,6 +30,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { getRecentInvoices, formatCurrency, formatDisplayDate, type Invoice } from "@/api"
 
 // Menu items for events management
 const data = {
@@ -238,6 +239,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+            {/* Recent Invoices */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Recent Invoices</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <RecentInvoicesList />
+              </SidebarGroupContent>
+            </SidebarGroup>
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -257,5 +265,50 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+  )
+}
+
+function RecentInvoicesList() {
+  const [invoices, setInvoices] = useState<Invoice[] | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    setIsLoading(true)
+    getRecentInvoices(0, 5)
+      .then((data) => {
+        if (!mounted) return
+        setInvoices(data)
+      })
+      .catch((err) => {
+        if (!mounted) return
+        console.error(err)
+        setError(String(err?.message ?? err))
+      })
+      .finally(() => mounted && setIsLoading(false))
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  if (isLoading) return <div className="px-2 py-1 text-sm text-muted-foreground">Loading...</div>
+  if (error) return <div className="px-2 py-1 text-sm text-red-600">Error</div>
+  if (!invoices || invoices.length === 0) return <div className="px-2 py-1 text-sm text-muted-foreground">No recent invoices</div>
+
+  return (
+    <SidebarMenu>
+      {invoices.map((inv) => (
+        <SidebarMenuItem key={inv.id}>
+          <SidebarMenuButton asChild>
+            <a href={`/invoices/${inv.id}`} className="flex items-center justify-between w-full">
+              <span className="truncate text-sm">{inv.customerName || `Invoice ${inv.id}`}</span>
+              <span className="ml-2 text-xs text-muted-foreground">{formatCurrency(inv.amount)} • {formatDisplayDate(inv.date)}</span>
+            </a>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
   )
 }
