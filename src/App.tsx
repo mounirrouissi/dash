@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarRail
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import {
   ChevronLeft,
@@ -21,10 +21,10 @@ import {
   Globe, // For quick actions
   Home,
   Search,
-  Settings
+  Settings,
 } from "lucide-react";
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Route,
   BrowserRouter as Router,
@@ -33,8 +33,8 @@ import {
   useNavigate, // For programmatic navigation
 } from "react-router-dom";
 
-import { Dashboard } from './pages/Dashboard'; // Import from pages directory
-import Invoices from './pages/Invoices';
+import { Dashboard } from "./pages/Dashboard"; // Import from pages directory
+import Invoices from "./pages/Invoices";
 
 // --- Data for the Sidebar Navigation ---
 const sidebarNavData = {
@@ -49,7 +49,6 @@ const sidebarNavData = {
       title: "navigation.invoices",
       url: "/invoices",
       icon: FileText,
-
     },
     // Add other main navigation items if you expand your app
   ],
@@ -84,8 +83,8 @@ function AppContent() {
       setIsMobile(window.innerWidth < 1024);
     };
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   const handleNavigation = (url: string) => {
@@ -98,7 +97,7 @@ function AppContent() {
 
   // Language toggle function
   const toggleLanguage = () => {
-    const newLang = i18n.language === 'en' ? 'fr' : 'en';
+    const newLang = i18n.language === "en" ? "fr" : "en";
     i18n.changeLanguage(newLang);
   };
 
@@ -112,11 +111,12 @@ function AppContent() {
         />
       )}
       {/* Sidebar */}
-      <Sidebar collapsible="icon"
+      <Sidebar
+        collapsible="icon"
         className={`
-          ${isMobile ? 'fixed' : 'relative'}
+          fixed
           z-50 inset-y-0 left-0
-          ${isMobile ? 'w-64' : isSidebarOpen ? 'w-64' : 'w-16'}
+          ${isMobile ? "w-64" : isSidebarOpen ? "w-64" : "w-16"}
           transition-all duration-300 ease-in-out
           border-r border-gray-200 bg-white/90 backdrop-blur-xl shadow-lg
         `}
@@ -130,8 +130,6 @@ function AppContent() {
                   <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                     <Home className="size-4" />
                   </div>
-
-
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -143,10 +141,10 @@ function AppContent() {
                 <SidebarGroupContent className="relative">
                   <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
                   <SidebarInput
-                    placeholder={t('navigation.search')}
+                    placeholder={t("navigation.search")}
                     className="pl-8"
                     value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -200,14 +198,18 @@ function AppContent() {
           </SidebarGroup>
           {/* Quick Actions */}
           <SidebarGroup>
-            {isSidebarOpen && <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>}
+            {isSidebarOpen && (
+              <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
+            )}
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <a href="/events/create">
                       <FileText className="size-4" />
-                      {isSidebarOpen && <span>{t('navigation.createEvent')}</span>}
+                      {isSidebarOpen && (
+                        <span>{t("navigation.createEvent")}</span>
+                      )}
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -215,7 +217,9 @@ function AppContent() {
                   <SidebarMenuButton asChild>
                     <a href="/invoices/create">
                       <FileText className="size-4" />
-                      {isSidebarOpen && <span>{t('navigation.newInvoice')}</span>}
+                      {isSidebarOpen && (
+                        <span>{t("navigation.newInvoice")}</span>
+                      )}
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -251,8 +255,8 @@ function AppContent() {
           onClick={toggleSidebar}
           className="fixed top-4 z-50 p-2 rounded-full bg-white border border-gray-200 shadow-lg hover:bg-gray-50 transition-all duration-200 ease-in-out"
           style={{
-            left: isSidebarOpen ? '248px' : '66px', // Position based on sidebar width
-            transform: 'translateX(-50%)'
+            left: isSidebarOpen ? "248px" : "66px", // Position based on sidebar width
+            transform: "translateX(-50%)",
           }}
           title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
         >
@@ -265,22 +269,29 @@ function AppContent() {
       )}
 
       {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col overflow-hidden ${!isMobile && isSidebarOpen ? 'lg:ml-64' : !isMobile ? 'lg:ml-16' : ''}`}>
+      <div
+        className={`flex-1 flex flex-col overflow-hidden ${
+          isSidebarOpen ? "ml-64" : "ml-16"
+        } ${isMobile && !isSidebarOpen ? "ml-0" : ""}`}
+      >
         {/* Header */}
         <header className="flex h-16 items-center gap-4 border-b bg-white/80 backdrop-blur-xl px-4 sm:px-6 lg:px-8 sticky top-0 z-20 shadow-sm">
-
           <h1 className="text-xl font-semibold text-gray-900 capitalize">
-            {activeRoute === "/" ? t('dashboard.title') : activeRoute === "/invoices" ? t('navigation.invoices') : "Page"}
+            {activeRoute === "/"
+              ? t("dashboard.title")
+              : activeRoute === "/invoices"
+              ? t("navigation.invoices")
+              : "Page"}
           </h1>
           <div className="flex items-center space-x-4 ml-auto">
             <div className="relative hidden sm:block">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
               <input
                 type="text"
-                placeholder={t('navigation.searchHeader')}
+                placeholder={t("navigation.searchHeader")}
                 className="w-full rounded-lg border border-gray-300 bg-gray-100 px-8 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <div className="h-6 w-px bg-gray-300"></div>
@@ -288,14 +299,16 @@ function AppContent() {
             <button
               onClick={toggleLanguage}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all duration-200 border border-transparent hover:border-gray-200"
-              title={`Switch to ${i18n.language === 'en' ? 'French' : 'English'}`}
+              title={`Switch to ${
+                i18n.language === "en" ? "French" : "English"
+              }`}
             >
               <Globe className="h-4 w-4" />
               <span className="text-sm font-medium hidden sm:inline">
-                {i18n.language === 'en' ? 'EN' : 'FR'}
+                {i18n.language === "en" ? "EN" : "FR"}
               </span>
               <span className="text-xs text-gray-500 hidden md:inline">
-                {i18n.language === 'en' ? 'English' : 'Français'}
+                {i18n.language === "en" ? "English" : "Français"}
               </span>
             </button>
           </div>
@@ -319,7 +332,9 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <SidebarProvider> {/* Provider for sidebar context */}
+      <SidebarProvider>
+        {" "}
+        {/* Provider for sidebar context */}
         <AppContent />
       </SidebarProvider>
     </Router>
