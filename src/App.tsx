@@ -112,7 +112,7 @@ function AppContent() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-gray-50">
+    <div className="min-h-screen w-full bg-gray-50">
       {/* Overlay for mobile and medium screens */}
       {(isMobile || isMedium) && isSidebarOpen && (
         <div
@@ -126,7 +126,15 @@ function AppContent() {
         className={`
           fixed
           z-50 inset-y-0 left-0
-          ${isMobile || isMedium ? "w-64" : isSidebarOpen ? "w-64" : "w-16"}
+          ${
+            (isMobile || isMedium) && !isSidebarOpen
+              ? "-translate-x-full w-64"
+              : (isMobile || isMedium) && isSidebarOpen
+              ? "w-64"
+              : isSidebarOpen
+              ? "w-64"
+              : "w-16"
+          }
           transition-all duration-300 ease-in-out
           border-r border-gray-200 bg-white/90 backdrop-blur-xl shadow-lg
         `}
@@ -281,9 +289,11 @@ function AppContent() {
       {/* Main Content Area */}
       <div
         className={`flex-1 flex flex-col overflow-hidden ${
-          (isMobile || isMedium) && !isSidebarOpen
+          // On mobile/medium screens, always no margin (sidebar overlays)
+          isMobile || isMedium
             ? "ml-0"
-            : isSidebarOpen
+            : // On desktop, margin based on sidebar state
+            isSidebarOpen
             ? "ml-64"
             : "ml-16"
         }`}
@@ -350,8 +360,8 @@ function AppContent() {
           </div>
         </header>
         {/* Main Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto p-6">
             <Routes>
               <Route path="/" element={<Dashboard searchTerm={searchTerm} />} />
               <Route path="/invoices" element={<Invoices />} />
