@@ -76,20 +76,30 @@ function AppContent() {
   // Sidebar open/collapse state
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [isMedium, setIsMedium] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 768); // Mobile: < 768px
+      setIsMedium(width >= 768 && width < 1024); // Medium: 768px - 1023px
+
+      // Auto-collapse sidebar on medium screens
+      if (width >= 768 && width < 1024) {
+        setIsSidebarOpen(false);
+      } else if (width >= 1024) {
+        setIsSidebarOpen(true);
+      }
     };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
   const handleNavigation = (url: string) => {
     navigate(url);
-    if (isMobile) setIsSidebarOpen(false);
+    if (isMobile || isMedium) setIsSidebarOpen(false);
   };
 
   const toggleSidebar = () => setIsSidebarOpen((open) => !open);
@@ -103,8 +113,8 @@ function AppContent() {
 
   return (
     <div className="flex min-h-screen w-full bg-gray-50">
-      {/* Overlay for mobile */}
-      {isMobile && isSidebarOpen && (
+      {/* Overlay for mobile and medium screens */}
+      {(isMobile || isMedium) && isSidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
           onClick={closeSidebar}
@@ -116,7 +126,7 @@ function AppContent() {
         className={`
           fixed
           z-50 inset-y-0 left-0
-          ${isMobile ? "w-64" : isSidebarOpen ? "w-64" : "w-16"}
+          ${isMobile || isMedium ? "w-64" : isSidebarOpen ? "w-64" : "w-16"}
           transition-all duration-300 ease-in-out
           border-r border-gray-200 bg-white/90 backdrop-blur-xl shadow-lg
         `}
@@ -271,11 +281,37 @@ function AppContent() {
       {/* Main Content Area */}
       <div
         className={`flex-1 flex flex-col overflow-hidden ${
-          isSidebarOpen ? "ml-64" : "ml-16"
-        } ${isMobile && !isSidebarOpen ? "ml-0" : ""}`}
+          (isMobile || isMedium) && !isSidebarOpen
+            ? "ml-0"
+            : isSidebarOpen
+            ? "ml-64"
+            : "ml-16"
+        }`}
       >
         {/* Header */}
         <header className="flex h-16 items-center gap-4 border-b bg-white/80 backdrop-blur-xl px-4 sm:px-6 lg:px-8 sticky top-0 z-20 shadow-sm">
+          {/* Mobile/Medium Menu Button */}
+          {(isMobile || isMedium) && (
+            <button
+              onClick={toggleSidebar}
+              className="p-2 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all duration-200"
+              title="Toggle sidebar"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+          )}
           <h1 className="text-xl font-semibold text-gray-900 capitalize">
             {activeRoute === "/"
               ? t("dashboard.title")
