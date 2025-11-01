@@ -67,7 +67,7 @@
         "overdueInvoices": "En retard",
         "searchPlaceholder": "Rechercher des factures ou des clients...",
         "allStatus": "Tous les statuts",
-        "export": "Exporter vers Excel",
+        "export": "Exporter",
         "exporting": "Exportation...",
         "refresh": "Actualiser les factures",
         "tryAgain": "Réessayer",
