@@ -12,7 +12,6 @@ import {
   Download,
   FileText,
   MoreHorizontal,
-  Plus,
   RefreshCw,
   Search,
   User,
@@ -59,6 +58,7 @@ export default function Invoices() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const fetchInvoices = async (showRefreshIndicator = false) => {
     if (showRefreshIndicator) {
@@ -164,6 +164,103 @@ export default function Invoices() {
     }
   };
 
+  const exportToExcel = async () => {
+    if (filteredAndSortedInvoices.length === 0) {
+      return; // Don't export if no data
+    }
+
+    try {
+      setIsExporting(true);
+
+      // Prepare Excel headers
+      const headers = [
+        t("invoices.invoice"),
+        t("invoices.customer"),
+        t("events.date"),
+        t("invoices.amount"),
+        t("invoices.status"),
+      ];
+
+      // Prepare Excel data
+      const excelData = filteredAndSortedInvoices.map((invoice) => [
+        `#${invoice.id}`,
+        invoice.customerName,
+        formatDisplayDate(invoice.date),
+        formatCurrency(invoice.amount),
+        t(`invoices.${invoice.status}`),
+      ]);
+
+      // Create Excel-compatible HTML table with styling
+      const htmlTable = `
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              table { border-collapse: collapse; width: 100%; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f2f2f2; font-weight: bold; }
+              .number { text-align: right; }
+            </style>
+          </head>
+          <body>
+            <table>
+              <thead>
+                <tr>
+                  ${headers.map((header) => `<th>${header}</th>`).join("")}
+                </tr>
+              </thead>
+              <tbody>
+                ${excelData
+                  .map(
+                    (row) =>
+                      `<tr>
+                    <td>${row[0]}</td>
+                    <td>${row[1]}</td>
+                    <td>${row[2]}</td>
+                    <td class="number">${row[3]}</td>
+                    <td>${row[4]}</td>
+                  </tr>`
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </body>
+        </html>
+      `;
+
+      // Create blob with Excel MIME type
+      const blob = new Blob([htmlTable], {
+        type: "application/vnd.ms-excel;charset=utf-8;",
+      });
+
+      const link = document.createElement("a");
+
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+
+        // Generate filename with current date and filter info
+        const now = new Date();
+        const dateStr = now.toISOString().split("T")[0]; // YYYY-MM-DD format
+        const statusSuffix = statusFilter !== "all" ? `-${statusFilter}` : "";
+        const filename = `invoices-export${statusSuffix}-${dateStr}.xls`;
+
+        link.setAttribute("download", filename);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up the URL
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+      }
+    } catch (error) {
+      console.error("Error exporting invoices:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const LoadingSkeleton = () => (
     <div className="space-y-4">
       {[...Array(5)].map((_, i) => (
@@ -238,7 +335,6 @@ export default function Invoices() {
               <TooltipContent>{t("invoices.refresh")}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-
         </div>
       </div>
 
@@ -344,9 +440,18 @@ export default function Invoices() {
                 <option value="overdue">{t("invoices.overdue")}</option>
                 <option value="expired">{t("invoices.expired")}</option>
               </select>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                {t("invoices.export")}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportToExcel}
+                disabled={filteredAndSortedInvoices.length === 0 || isExporting}
+              >
+                <Download
+                  className={`h-4 w-4 mr-2 ${
+                    isExporting ? "animate-spin" : ""
+                  }`}
+                />
+                {isExporting ? t("invoices.exporting") : t("invoices.export")}
               </Button>
             </div>
           </div>
