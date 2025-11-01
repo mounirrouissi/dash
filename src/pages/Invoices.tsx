@@ -47,7 +47,7 @@ import {
 
 type SortField = "id" | "customerName" | "date" | "amount" | "status";
 type SortDirection = "asc" | "desc";
-type StatusFilter = "all" | "paid" | "pending" | "overdue";
+type StatusFilter = "all" | "paid" | "pending" | "overdue" | "expired";
 
 export default function Invoices() {
   const { t } = useTranslation();
@@ -106,8 +106,12 @@ export default function Invoices() {
         aValue = parseFloat(a.amount.toString());
         bValue = parseFloat(b.amount.toString());
       } else if (sortField === "date") {
-        aValue = new Date(a.date);
-        bValue = new Date(b.date);
+        aValue = Array.isArray(a.date)
+          ? new Date(a.date[0], a.date[1] - 1, a.date[2])
+          : new Date(a.date);
+        bValue = Array.isArray(b.date)
+          ? new Date(b.date[0], b.date[1] - 1, b.date[2])
+          : new Date(b.date);
       }
 
       if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
@@ -131,7 +135,7 @@ export default function Invoices() {
       (inv) => inv.status === "pending"
     ).length;
     const overdue = filteredAndSortedInvoices.filter(
-      (inv) => inv.status === "overdue"
+      (inv) => inv.status === "overdue" || inv.status === "expired"
     ).length;
 
     return { total, paid, pending, overdue };
@@ -153,6 +157,7 @@ export default function Invoices() {
       case "pending":
         return "secondary";
       case "overdue":
+      case "expired":
         return "destructive";
       default:
         return "secondary";
@@ -340,6 +345,7 @@ export default function Invoices() {
                 <option value="paid">{t("invoices.paid")}</option>
                 <option value="pending">{t("invoices.pending")}</option>
                 <option value="overdue">{t("invoices.overdue")}</option>
+                <option value="expired">{t("invoices.expired")}</option>
               </select>
               <Button variant="outline" size="sm">
                 <Download className="h-4 w-4 mr-2" />
@@ -395,17 +401,6 @@ export default function Invoices() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50/50">
-                    <TableHead className="w-[120px]">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSort("id")}
-                        className="h-auto p-0 font-semibold text-gray-700 hover:text-gray-900"
-                      >
-                        {t("invoices.invoice")}
-                        <ArrowUpDown className="ml-2 h-3 w-3" />
-                      </Button>
-                    </TableHead>
                     <TableHead>
                       <Button
                         variant="ghost"
@@ -462,7 +457,6 @@ export default function Invoices() {
                       key={invoice.id}
                       className="hover:bg-gray-50/50 transition-colors duration-150"
                     >
-                   
                       <TableCell>
                         <div className="font-medium text-gray-900">
                           {invoice.customerName}

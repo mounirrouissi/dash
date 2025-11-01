@@ -58,6 +58,7 @@
         "paid": "paid",
         "pending": "pending",
         "overdue": "overdue",
+        "expired": "expired",
         "title": "Invoices",
         "description": "Manage and track all your invoices in one place",
         "totalRevenue": "Total Revenue",

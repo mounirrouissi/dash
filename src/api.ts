@@ -6,14 +6,14 @@ interface ImportMetaEnv {
 }
 
 // --- Type for Invoice ---
-export interface Invoice { // Renamed from RecentInvoice for the 'all invoices' context
-  id: string // Or invoice number/order number
-  customerName: string
-  date: string // Backend sends LocalDate, which serializes as YYYY-MM-DD string
-  amount: string // Backend sends BigDecimal, can receive as string to handle precision
-  status: string // e.g., "paid", "pending", "overdue"
+export interface Invoice {
+  // Renamed from RecentInvoice for the 'all invoices' context
+  id: string; // Or invoice number/order number
+  customerName: string;
+  date: string | number[]; // Backend can send LocalDate as string "YYYY-MM-DD" or array [YYYY, MM, DD]
+  amount: string; // Backend sends BigDecimal, can receive as string to handle precision
+  status: "paid" | "pending" | "overdue" | "expired"; // Valid invoice statuses
 }
-
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
@@ -22,93 +22,93 @@ interface ImportMeta {
 // ... (other imports and apiClient setup) ...
 
 // Base API URL - you can make this configurable via environment variables
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:9003/api/v1/dashboard"
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:9003/api/v1/dashboard";
 
 // --- Types for Dashboard Metrics (mirroring backend DTOs) ---
 export interface MetricValue {
-  currentValue: number // Using number, BigDecimal from backend will be serialized to number
-  changePercentage: number | null // null if no previous period or previous value was 0 and current is 0
-  trend: "increase" | "decrease" | "neutral"
+  currentValue: number; // Using number, BigDecimal from backend will be serialized to number
+  changePercentage: number | null; // null if no previous period or previous value was 0 and current is 0
+  trend: "increase" | "decrease" | "neutral";
 }
 
 export interface DashboardMetrics {
-  totalRevenue: MetricValue
-  ticketsSold: MetricValue
-  customers: MetricValue
-  pendingInvoices: MetricValue
+  totalRevenue: MetricValue;
+  ticketsSold: MetricValue;
+  customers: MetricValue;
+  pendingInvoices: MetricValue;
 }
 
-
 export interface EventStats {
-  id: number  // Changed from string to number
-  name: string
-  date: string
-  location: string
-  status: "ONSALE" | "PUBLISHED" | "DRAFT" | "CANCELLED" | string  // Add actual statuses
-  category: string
-  attendees: number
-  capacity: number
-  revenue: number
-  views?: number  // Make optional since backend doesn't return it
-  ticketsSold?: number  // Make optional
+  id: string; // Keep as string for consistency
+  name: string;
+  date: string;
+  location: string;
+  status: "ONSALE" | "PUBLISHED" | "DRAFT" | "CANCELLED" | string; // Add actual statuses
+  category: string;
+  attendees: number;
+  capacity: number;
+  revenue: number;
+  views?: number; // Make optional since backend doesn't return it
+  ticketsSold?: number; // Make optional
 }
 
 // Spring Page response structure
 export interface SpringPageResponse<T> {
-  content: T[]
-  totalElements: number
-  totalPages: number
-  size: number
-  number: number
-  first: boolean
-  last: boolean
-  empty: boolean
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
 }
 
 export interface EventsResponse {
-  events: EventStats[]
-  totalEvents: number
-  totalPages?: number
-  currentPage?: number
+  events: EventStats[];
+  totalEvents: number;
+  totalPages?: number;
+  currentPage?: number;
 }
 
 // Helper to extract a message from unknown error-like values
 export const getErrorMessage = (error: unknown): string => {
-  if (!error) return ''
-  if (typeof error === 'string') return error
-  if (error instanceof Error) return error.message
+  if (!error) return "";
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message;
   try {
-    const obj = error as Record<string, unknown>
-    if (obj && typeof obj.message === 'string') return obj.message
+    const obj = error as Record<string, unknown>;
+    if (obj && typeof obj.message === "string") return obj.message;
   } catch {
     // ignore
   }
-  return String(error)
-}
+  return String(error);
+};
 
 // small access helpers that avoid `any`
-const getString = (obj: unknown, keys: string[], fallback = ''): string => {
-  if (!obj || typeof obj !== 'object') return fallback
+const getString = (obj: unknown, keys: string[], fallback = ""): string => {
+  if (!obj || typeof obj !== "object") return fallback;
   for (const k of keys) {
-    const v = (obj as Record<string, unknown>)[k]
-    if (typeof v === 'string') return v
-    if (typeof v === 'number') return String(v)
+    const v = (obj as Record<string, unknown>)[k];
+    if (typeof v === "string") return v;
+    if (typeof v === "number") return String(v);
   }
-  return fallback
-}
+  return fallback;
+};
 
 const getNumber = (obj: unknown, keys: string[], fallback = 0): number => {
-  if (!obj || typeof obj !== 'object') return fallback
+  if (!obj || typeof obj !== "object") return fallback;
   for (const k of keys) {
-    const v = (obj as Record<string, unknown>)[k]
-    if (typeof v === 'number') return v
-    if (typeof v === 'string') {
-      const n = Number(v)
-      if (!Number.isNaN(n)) return n
+    const v = (obj as Record<string, unknown>)[k];
+    if (typeof v === "number") return v;
+    if (typeof v === "string") {
+      const n = Number(v);
+      if (!Number.isNaN(n)) return n;
     }
   }
-  return fallback
-}
+  return fallback;
+};
 
 /**
  * Fetch a single event by id using HAL+JSON response format.
@@ -116,86 +116,99 @@ const getNumber = (obj: unknown, keys: string[], fallback = 0): number => {
  * @param eventId - numeric id of the event
  * @param apiVersion - API version path segment (default: 'v1')
  */
-export const getEventById = async (eventId: number | string, apiVersion = 'v1'): Promise<EventStats> => {
+export const getEventById = async (
+  eventId: number | string,
+  apiVersion = "v1"
+): Promise<EventStats> => {
   try {
-    const url = `${API_BASE_URL.replace('/api/v1/dashboard', '')}/${apiVersion}/sales/events/${eventId}`
-    console.log(`Requesting Event by ID URL: ${url}`)
+    const url = `${API_BASE_URL.replace(
+      "/api/v1/dashboard",
+      ""
+    )}/${apiVersion}/sales/events/${eventId}`;
+    console.log(`Requesting Event by ID URL: ${url}`);
 
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Accept': 'application/hal+json',
-        'Content-Type': 'application/json',
+        Accept: "application/hal+json",
+        "Content-Type": "application/json",
       },
-    })
+    });
 
     if (!response.ok) {
-      let errorMessage = `Failed to fetch event ${eventId}: ${response.status} ${response.statusText}`
+      let errorMessage = `Failed to fetch event ${eventId}: ${response.status} ${response.statusText}`;
       try {
-        const errorJson = await response.json()
-        if (errorJson && errorJson.message) errorMessage += ` - ${errorJson.message}`
+        const errorJson = await response.json();
+        if (errorJson && errorJson.message)
+          errorMessage += ` - ${errorJson.message}`;
       } catch (err) {
         // ignore json parse errors
       }
-      throw new Error(errorMessage)
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json()
+    const data = await response.json();
 
     // HAL responses may wrap the resource directly or under _embedded. Try to find the event resource.
-    let eventPayload: any = data
+    let eventPayload: any = data;
     if (data && data._embedded) {
       // try common keys - this is heuristic because HAL embedded collection/resource names vary
-      const keys = Object.keys(data._embedded)
+      const keys = Object.keys(data._embedded);
       if (keys.length === 1) {
-        eventPayload = data._embedded[keys[0]]
-      } else if (keys.includes('event')) {
-        eventPayload = data._embedded['event']
+        eventPayload = data._embedded[keys[0]];
+      } else if (keys.includes("event")) {
+        eventPayload = data._embedded["event"];
       } else {
         // fallback to first embedded value
-        eventPayload = data._embedded[keys[0]]
+        eventPayload = data._embedded[keys[0]];
       }
     }
 
     // If the embedded value is an array, pick the first element
     if (Array.isArray(eventPayload)) {
-      eventPayload = eventPayload[0]
+      eventPayload = eventPayload[0];
     }
 
     // Map HAL fields to EventStats where possible. Assume backend uses similar field names.
     const mapped: EventStats = {
       id: String(eventPayload.id ?? eventPayload.eventId ?? eventId),
-      name: eventPayload.name ?? eventPayload.title ?? '',
-      date: eventPayload.date ?? eventPayload.startDate ?? '',
-      location: eventPayload.location ?? eventPayload.venue ?? '',
-      status: (eventPayload.status ?? 'upcoming') as EventStats['status'],
-      category: eventPayload.category ?? eventPayload.type ?? '',
-      attendees: Number(eventPayload.attendees ?? eventPayload.attendeeCount ?? 0),
+      name: eventPayload.name ?? eventPayload.title ?? "",
+      date: eventPayload.date ?? eventPayload.startDate ?? "",
+      location: eventPayload.location ?? eventPayload.venue ?? "",
+      status: (eventPayload.status ?? "upcoming") as EventStats["status"],
+      category: eventPayload.category ?? eventPayload.type ?? "",
+      attendees: Number(
+        eventPayload.attendees ?? eventPayload.attendeeCount ?? 0
+      ),
       capacity: Number(eventPayload.capacity ?? eventPayload.maxCapacity ?? 0),
       revenue: Number(eventPayload.revenue ?? eventPayload.totalRevenue ?? 0),
       views: Number(eventPayload.views ?? 0),
       ticketsSold: Number(eventPayload.ticketsSold ?? eventPayload.sold ?? 0),
-    }
+    };
 
-    return mapped
+    return mapped;
   } catch (error: any) {
-    console.error(`Error fetching event ${eventId}:`, error)
-    throw new Error(error?.message || `An unexpected error occurred while fetching event ${eventId}`)
+    console.error(`Error fetching event ${eventId}:`, error);
+    throw new Error(
+      error?.message ||
+        `An unexpected error occurred while fetching event ${eventId}`
+    );
   }
-}
+};
 
 /**
  * Fetches dashboard summary metrics.
  * @param period - Optional period in "YYYY-MM" format (e.g., "2023-10").
  *                 If null, backend defaults to current month.
  */
-export const getDashboardMetrics = async (period?: string): Promise<DashboardMetrics> => {
+export const getDashboardMetrics = async (
+  period?: string
+): Promise<DashboardMetrics> => {
   try {
-    const params = period ? new URLSearchParams({ period }).toString() : ""
-    const url = `${API_BASE_URL}/metrics${params ? "?" + params : ""}`
+    const params = period ? new URLSearchParams({ period }).toString() : "";
+    const url = `${API_BASE_URL}/metrics${params ? "?" + params : ""}`;
 
-    console.log(`Requesting Dashboard Metrics URL: ${url}`)
-
+    console.log(`Requesting Dashboard Metrics URL: ${url}`);
 
     const response = await fetch(url, {
       method: "GET",
@@ -204,69 +217,83 @@ export const getDashboardMetrics = async (period?: string): Promise<DashboardMet
         // Add any other headers you need, like Authorization
         // 'Authorization': `Bearer ${yourAuthToken}`,
       },
-    })
+    });
 
     if (!response.ok) {
-      let errorMessage = `Failed to fetch dashboard metrics: ${response.status} ${response.statusText}`
+      let errorMessage = `Failed to fetch dashboard metrics: ${response.status} ${response.statusText}`;
       try {
-        const errorJson = await response.json()
-        if (errorJson.message) errorMessage += ` - ${errorJson.message}`
+        const errorJson = await response.json();
+        if (errorJson.message) errorMessage += ` - ${errorJson.message}`;
       } catch (e) {
         // Ignore JSON parsing error if response body isn't JSON
       }
-      throw new Error(errorMessage)
+      throw new Error(errorMessage);
     }
 
-    const data: DashboardMetrics = await response.json()
-    return data
+    const data: DashboardMetrics = await response.json();
+    return data;
   } catch (error) {
-    console.error("Error fetching dashboard metrics:", error)
+    console.error("Error fetching dashboard metrics:", error);
     // error may be unknown; stringify safely
-    const message = (error && typeof error === 'object' && 'message' in error) ? (error as any).message : String(error)
-    throw new Error(message || "An unexpected error occurred while fetching metrics.")
+    const message =
+      error && typeof error === "object" && "message" in error
+        ? (error as any).message
+        : String(error);
+    throw new Error(
+      message || "An unexpected error occurred while fetching metrics."
+    );
   }
-}
+};
 
 /**
  * Fetches recent invoices.
  * @param limit - Number of recent invoices to fetch (defaults to 5).
  */
-export const getRecentInvoices = async (page = 0, size = 5): Promise<Invoice[]> => {
+export const getRecentInvoices = async (
+  page = 0,
+  size = 5
+): Promise<Invoice[]> => {
   try {
     const params = new URLSearchParams({
       page: page.toString(),
-      size: size.toString()
-    }).toString()
-    const url = `${API_BASE_URL}/recent-invoices?${params}`
+      size: size.toString(),
+    }).toString();
+    const url = `${API_BASE_URL}/recent-invoices?${params}`;
 
-    console.log(`Requesting Recent Invoices URL: ${url}`)
+    console.log(`Requesting Recent Invoices URL: ${url}`);
 
     const response = await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
-    })
+    });
 
     if (!response.ok) {
-      let errorMessage = `Failed to fetch recent invoices: ${response.status} ${response.statusText}`
+      let errorMessage = `Failed to fetch recent invoices: ${response.status} ${response.statusText}`;
       try {
-        const errorJson = await response.json()
-        if (errorJson && (errorJson as any).message) errorMessage += ` - ${(errorJson as any).message}`
+        const errorJson = await response.json();
+        if (errorJson && (errorJson as any).message)
+          errorMessage += ` - ${(errorJson as any).message}`;
       } catch (_) {
         // Ignore JSON parsing errors
       }
-      throw new Error(errorMessage)
+      throw new Error(errorMessage);
     }
 
-    const data: Invoice[] = await response.json()
-    return data
+    const data: Invoice[] = await response.json();
+    return data;
   } catch (error) {
-    console.error("Error fetching recent invoices:", error)
-    const message = (error && typeof error === 'object' && 'message' in error) ? (error as any).message : String(error)
-    throw new Error(message || "An unexpected error occurred while fetching recent invoices.")
+    console.error("Error fetching recent invoices:", error);
+    const message =
+      error && typeof error === "object" && "message" in error
+        ? (error as any).message
+        : String(error);
+    throw new Error(
+      message || "An unexpected error occurred while fetching recent invoices."
+    );
   }
-}
+};
 
 /**
  * Fetches individual event statistics from the sales API endpoint.
@@ -277,82 +304,87 @@ export const getRecentInvoices = async (page = 0, size = 5): Promise<Invoice[]> 
  * @param apiVersion - API version path segment (e.g. 'v1')
  */
 export const getEventStats = async (
-  page = 0, 
-  size = 10, 
+  page = 0,
+  size = 10,
   status?: string
 ): Promise<EventsResponse> => {
   try {
     const params = new URLSearchParams({
       page: page.toString(),
-      size: size.toString()
-    })
+      size: size.toString(),
+    });
     if (status) {
-      params.append("status", status)
+      params.append("status", status);
     }
 
-    const url = `${API_BASE_URL}/events?${params.toString()}`
-    console.log(`Requesting Event Stats URL: ${url}`)
+    const url = `${API_BASE_URL}/events?${params.toString()}`;
+    console.log(`Requesting Event Stats URL: ${url}`);
 
     const response = await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
-    })
+    });
 
     if (!response.ok) {
-      let errorMessage = `Failed to fetch event statistics: ${response.status} ${response.statusText}`
+      let errorMessage = `Failed to fetch event statistics: ${response.status} ${response.statusText}`;
       try {
-        const errorJson = await response.json()
-        if (errorJson?.message) errorMessage += ` - ${errorJson.message}`
+        const errorJson = await response.json();
+        if (errorJson?.message) errorMessage += ` - ${errorJson.message}`;
       } catch (_) {
         // Ignore JSON parsing error
       }
-      throw new Error(errorMessage)
+      throw new Error(errorMessage);
     }
 
     // Backend returns Spring Page object
-    const pageData: SpringPageResponse<EventStats> = await response.json()
-    console.log("Event Stats Page Data:", pageData)
+    const pageData: SpringPageResponse<EventStats> = await response.json();
+    console.log("Event Stats Page Data:", pageData);
 
     // Transform to your expected format
     const transformedData: EventsResponse = {
-      events: pageData.content.map(event => ({
+      events: pageData.content.map((event) => ({
         ...event,
-        id: event.id.toString(), // Convert to string if needed
+        id: String(event.id), // Convert to string if needed
         // Add default values for missing fields
         views: event.attendees, // Use attendees as views (as per your frontend)
         ticketsSold: event.attendees, // Use attendees as ticketsSold
         // Normalize status to lowercase
-        status: event.status.toLowerCase() as any
+        status: event.status.toLowerCase() as any,
       })),
       totalEvents: pageData.totalElements,
       totalPages: pageData.totalPages,
-      currentPage: pageData.number
-    }
+      currentPage: pageData.number,
+    };
 
-    return transformedData
+    return transformedData;
   } catch (error) {
-    console.error("Error fetching event statistics:", error)
-    const message = error instanceof Error ? error.message : String(error)
-    throw new Error(message || "An unexpected error occurred while fetching event statistics.")
+    console.error("Error fetching event statistics:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      message || "An unexpected error occurred while fetching event statistics."
+    );
   }
-}
+};
 
 // Helper to format BigDecimal strings from backend
 export const formatCurrency = (amount: string | number | undefined): string => {
-  if (amount == null) return "$0.00"
+  if (amount == null) return "$0.00";
 
   // Remove any character that's not digit, decimal point, minus sign, or exponent
-  const sanitized = typeof amount === "string" ? amount.replace(/[^0-9eE.+-]/g, "") : amount.toString()
+  const sanitized =
+    typeof amount === "string"
+      ? amount.replace(/[^0-9eE.+-]/g, "")
+      : amount.toString();
 
-  const numAmount = Number.parseFloat(sanitized)
-  if (isNaN(numAmount)) return "$0.00"
+  const numAmount = Number.parseFloat(sanitized);
+  if (isNaN(numAmount)) return "$0.00";
   return `$${numAmount.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })}`
-}
+  })}`;
+};
 
 // Helper to format date
 export const formatDate = (dateString: string): string => {
@@ -360,54 +392,81 @@ export const formatDate = (dateString: string): string => {
     year: "numeric",
     month: "short",
     day: "numeric",
-  })
-}
+  });
+};
 
-export const getAllInvoices = async (): Promise<Invoice[]> => { // Using Invoice type
+export const getAllInvoices = async (): Promise<Invoice[]> => {
+  // Using Invoice type
   try {
-    const url = `${API_BASE_URL}/invoices`
+    const url = `${API_BASE_URL}/invoices`;
 
-    console.log(`Requesting All Invoices URL: ${url}`)
+    console.log(`Requesting All Invoices URL: ${url}`);
 
     const response = await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
-    })
+    });
 
     if (!response.ok) {
-      let errorMessage = `Failed to fetch all invoices: ${response.status} ${response.statusText}`
+      let errorMessage = `Failed to fetch all invoices: ${response.status} ${response.statusText}`;
       try {
-        const errorJson = await response.json()
-        if (errorJson && typeof (errorJson as any)?.message === 'string') {
-          errorMessage += ` - ${(errorJson as any).message}`
+        const errorJson = await response.json();
+        if (errorJson && typeof (errorJson as any)?.message === "string") {
+          errorMessage += ` - ${(errorJson as any).message}`;
         }
       } catch (parseErr) {
         // Ignore JSON parsing error if response body isn't JSON; log if needed
-        console.debug("Ignored JSON parse error while reading error body for all invoices:", parseErr)
+        console.debug(
+          "Ignored JSON parse error while reading error body for all invoices:",
+          parseErr
+        );
       }
-      throw new Error(errorMessage)
+      throw new Error(errorMessage);
     }
 
-    const data: Invoice[] = await response.json()
-    return data
+    const data: Invoice[] = await response.json();
+    return data;
   } catch (error) {
-    console.error("Error fetching all invoices:", error)
-    const msg = getErrorMessage(error)
-    throw new Error(msg || "An unexpected error occurred while fetching all invoices.")
+    console.error("Error fetching all invoices:", error);
+    const msg = getErrorMessage(error);
+    throw new Error(
+      msg || "An unexpected error occurred while fetching all invoices."
+    );
   }
-}
+};
 
 // Format date for display used in the table
-export const formatDisplayDate = (dateString: string): string => {
+export const formatDisplayDate = (dateInput: string | number[]): string => {
   try {
-    if (!dateString) return 'Invalid Date';
-    // Attempt to parse as YYYY-MM-DD first
-    const [year, month, day] = dateString.split('-').map(Number);
-    if (year && month && day) {
-      // Adjust month as it's 0-indexed in Date constructor
+    if (!dateInput) return "Invalid Date";
+
+    let year: number, month: number, day: number;
+
+    // Handle array format [2025, 9, 27]
+    if (Array.isArray(dateInput)) {
+      [year, month, day] = dateInput;
+    } else {
+      // Handle string format "2025-09-27"
+      const parts = dateInput.split("-").map(Number);
+      [year, month, day] = parts;
+    }
+
+    // Validate the parsed values
+    if (
+      year &&
+      month &&
+      day &&
+      year > 1900 &&
+      month >= 1 &&
+      month <= 12 &&
+      day >= 1 &&
+      day <= 31
+    ) {
+      // Create date (month is 0-indexed in Date constructor)
       const date = new Date(year, month - 1, day);
+
       // Check if the parsed date is valid
       if (!isNaN(date.getTime())) {
         return date.toLocaleDateString("en-US", {
@@ -417,18 +476,22 @@ export const formatDisplayDate = (dateString: string): string => {
         });
       }
     }
-    // Fallback for other formats or invalid dates
-    const date = new Date(dateString);
-    if (!isNaN(date.getTime())) {
-      return date.toLocaleDateString("en-US", {
-        month: "2-digit",
-        day: "2-digit",
-        year: "numeric",
-      });
+
+    // Fallback for other formats - only if input is string
+    if (typeof dateInput === "string") {
+      const date = new Date(dateInput);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString("en-US", {
+          month: "2-digit",
+          day: "2-digit",
+          year: "numeric",
+        });
+      }
     }
-    return 'Invalid Date';
+
+    return "Invalid Date";
   } catch (error) {
-    console.error("Error formatting date:", dateString, error);
-    return 'Invalid Date';
+    console.error("Error formatting date:", dateInput, error);
+    return "Invalid Date";
   }
-}
+};

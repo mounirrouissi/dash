@@ -58,6 +58,7 @@
         "paid": "payée",
         "pending": "en attente",
         "overdue": "en retard",
+        "expired": "expirée",
         "title": "Factures",
         "description": "Gérez et suivez toutes vos factures en un seul endroit",
         "totalRevenue": "Revenus totaux",
