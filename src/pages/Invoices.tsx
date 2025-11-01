@@ -238,10 +238,7 @@ export default function Invoices() {
               <TooltipContent>{t("invoices.refresh")}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <Button size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            {t("navigation.newInvoice")}
-          </Button>
+
         </div>
       </div>
 
