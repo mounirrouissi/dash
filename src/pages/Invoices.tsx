@@ -1,40 +1,63 @@
 // src/pages/Invoices.tsx
-import { formatCurrency, formatDisplayDate, getAllInvoices, type Invoice } from "@/api";
 import {
-    ArrowUpDown,
-    Calendar,
-    CircleDollarSign,
-    Download,
-    FileText,
-    MoreHorizontal,
-    Plus,
-    RefreshCw,
-    Search,
-    User
+  formatCurrency,
+  formatDisplayDate,
+  getAllInvoices,
+  type Invoice,
+} from "@/api";
+import {
+  ArrowUpDown,
+  Calendar,
+  CircleDollarSign,
+  Download,
+  FileText,
+  MoreHorizontal,
+  Plus,
+  RefreshCw,
+  Search,
+  User,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Skeleton } from "../components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../components/ui/tooltip";
 
-type SortField = 'id' | 'customerName' | 'date' | 'amount' | 'status';
-type SortDirection = 'asc' | 'desc';
-type StatusFilter = 'all' | 'paid' | 'pending' | 'overdue';
+type SortField = "id" | "customerName" | "date" | "amount" | "status";
+type SortDirection = "asc" | "desc";
+type StatusFilter = "all" | "paid" | "pending" | "overdue";
 
 export default function Invoices() {
   const { t } = useTranslation();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<SortField>('date');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState<SortField>("date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchInvoices = async (showRefreshIndicator = false) => {
@@ -44,7 +67,7 @@ export default function Invoices() {
       setIsLoading(true);
     }
     setError(null);
-    
+
     try {
       const data = await getAllInvoices();
       setInvoices(data);
@@ -63,13 +86,14 @@ export default function Invoices() {
 
   // Filter and sort invoices
   const filteredAndSortedInvoices = useMemo(() => {
-    let filtered = invoices.filter(invoice => {
-      const matchesSearch = 
+    let filtered = invoices.filter((invoice) => {
+      const matchesSearch =
         invoice.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
-      
+
+      const matchesStatus =
+        statusFilter === "all" || invoice.status === statusFilter;
+
       return matchesSearch && matchesStatus;
     });
 
@@ -78,16 +102,16 @@ export default function Invoices() {
       let aValue: any = a[sortField];
       let bValue: any = b[sortField];
 
-      if (sortField === 'amount') {
+      if (sortField === "amount") {
         aValue = parseFloat(a.amount.toString());
         bValue = parseFloat(b.amount.toString());
-      } else if (sortField === 'date') {
+      } else if (sortField === "date") {
         aValue = new Date(a.date);
         bValue = new Date(b.date);
       }
 
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
 
@@ -96,31 +120,42 @@ export default function Invoices() {
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
-    const total = filteredAndSortedInvoices.reduce((sum, invoice) => 
-      sum + parseFloat(invoice.amount.toString()), 0
+    const total = filteredAndSortedInvoices.reduce(
+      (sum, invoice) => sum + parseFloat(invoice.amount.toString()),
+      0
     );
-    const paid = filteredAndSortedInvoices.filter(inv => inv.status === 'paid').length;
-    const pending = filteredAndSortedInvoices.filter(inv => inv.status === 'pending').length;
-    const overdue = filteredAndSortedInvoices.filter(inv => inv.status === 'overdue').length;
+    const paid = filteredAndSortedInvoices.filter(
+      (inv) => inv.status === "paid"
+    ).length;
+    const pending = filteredAndSortedInvoices.filter(
+      (inv) => inv.status === "pending"
+    ).length;
+    const overdue = filteredAndSortedInvoices.filter(
+      (inv) => inv.status === "overdue"
+    ).length;
 
     return { total, paid, pending, overdue };
   }, [filteredAndSortedInvoices]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'paid': return 'default';
-      case 'pending': return 'secondary';
-      case 'overdue': return 'destructive';
-      default: return 'secondary';
+      case "paid":
+        return "default";
+      case "pending":
+        return "secondary";
+      case "overdue":
+        return "destructive";
+      default:
+        return "secondary";
     }
   };
 
@@ -147,17 +182,19 @@ export default function Invoices() {
               <FileText className="h-5 w-5 text-red-400" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error Loading Invoices</h3>
+              <h3 className="text-sm font-medium text-red-800">
+                {t("invoices.errorLoadingInvoices")}
+              </h3>
               <p className="mt-1 text-sm text-red-700">{error}</p>
               <div className="mt-4">
-                <Button 
-                  onClick={() => fetchInvoices()} 
-                  variant="outline" 
+                <Button
+                  onClick={() => fetchInvoices()}
+                  variant="outline"
                   size="sm"
                   className="border-red-300 text-red-700 hover:bg-red-50"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Try Again
+                  {t("invoices.tryAgain")}
                 </Button>
               </div>
             </div>
@@ -174,31 +211,31 @@ export default function Invoices() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <FileText className="h-6 w-6 text-blue-600" />
-            {t('navigation.invoices')}
+            {t("navigation.invoices")}
           </h1>
-          <p className="text-gray-600 mt-1">
-            Manage and track all your invoices in one place
-          </p>
+          <p className="text-gray-600 mt-1">{t("invoices.description")}</p>
         </div>
         <div className="flex items-center gap-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  onClick={() => fetchInvoices(true)} 
-                  variant="outline" 
+                <Button
+                  onClick={() => fetchInvoices(true)}
+                  variant="outline"
                   size="sm"
                   disabled={isRefreshing}
                 >
-                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Refresh invoices</TooltipContent>
+              <TooltipContent>{t("invoices.refresh")}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
           <Button size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            {t('navigation.newInvoice')}
+            {t("navigation.newInvoice")}
           </Button>
         </div>
       </div>
@@ -209,7 +246,9 @@ export default function Invoices() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("invoices.totalRevenue")}
+                </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {formatCurrency(summaryStats.total.toString())}
                 </p>
@@ -218,13 +257,17 @@ export default function Invoices() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Paid Invoices</p>
-                <p className="text-2xl font-bold text-green-600">{summaryStats.paid}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("invoices.paidInvoices")}
+                </p>
+                <p className="text-2xl font-bold text-green-600">
+                  {summaryStats.paid}
+                </p>
               </div>
               <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
                 <div className="h-3 w-3 rounded-full bg-green-600"></div>
@@ -237,8 +280,12 @@ export default function Invoices() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{summaryStats.pending}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("invoices.pendingInvoices")}
+                </p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {summaryStats.pending}
+                </p>
               </div>
               <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
                 <div className="h-3 w-3 rounded-full bg-yellow-600"></div>
@@ -251,8 +298,12 @@ export default function Invoices() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Overdue</p>
-                <p className="text-2xl font-bold text-red-600">{summaryStats.overdue}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("invoices.overdueInvoices")}
+                </p>
+                <p className="text-2xl font-bold text-red-600">
+                  {summaryStats.overdue}
+                </p>
               </div>
               <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
                 <div className="h-3 w-3 rounded-full bg-red-600"></div>
@@ -270,7 +321,7 @@ export default function Invoices() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search invoices or customers..."
+                  placeholder={t("invoices.searchPlaceholder")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -280,17 +331,19 @@ export default function Invoices() {
             <div className="flex gap-2">
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as StatusFilter)
+                }
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="all">All Status</option>
-                <option value="paid">Paid</option>
-                <option value="pending">Pending</option>
-                <option value="overdue">Overdue</option>
+                <option value="all">{t("invoices.allStatus")}</option>
+                <option value="paid">{t("invoices.paid")}</option>
+                <option value="pending">{t("invoices.pending")}</option>
+                <option value="overdue">{t("invoices.overdue")}</option>
               </select>
               <Button variant="outline" size="sm">
                 <Download className="h-4 w-4 mr-2" />
-                Export
+                {t("invoices.export")}
               </Button>
             </div>
           </div>
@@ -301,10 +354,17 @@ export default function Invoices() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Invoices ({filteredAndSortedInvoices.length})</span>
+            <span>
+              {t("invoices.invoicesCount", {
+                count: filteredAndSortedInvoices.length,
+              })}
+            </span>
           </CardTitle>
           <CardDescription>
-            {filteredAndSortedInvoices.length} of {invoices.length} invoices
+            {t("invoices.invoicesOf", {
+              filtered: filteredAndSortedInvoices.length,
+              total: invoices.length,
+            })}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
@@ -315,19 +375,20 @@ export default function Invoices() {
           ) : filteredAndSortedInvoices.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No invoices found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {t("invoices.noInvoicesFound")}
+              </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm || statusFilter !== 'all' 
-                  ? "Try adjusting your search or filters" 
-                  : "Get started by creating your first invoice"
-                }
+                {searchTerm || statusFilter !== "all"
+                  ? t("invoices.adjustFilters")
+                  : t("invoices.getStarted")}
               </p>
-              {!searchTerm && statusFilter === 'all' && (
+              {/* {!searchTerm && statusFilter === "all" && (
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Invoice
+                  {t("invoices.createInvoice")}
                 </Button>
-              )}
+              )} */}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -335,60 +396,60 @@ export default function Invoices() {
                 <TableHeader>
                   <TableRow className="bg-gray-50/50">
                     <TableHead className="w-[120px]">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleSort('id')}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("id")}
                         className="h-auto p-0 font-semibold text-gray-700 hover:text-gray-900"
                       >
-                        Invoice
+                        {t("invoices.invoice")}
                         <ArrowUpDown className="ml-2 h-3 w-3" />
                       </Button>
                     </TableHead>
                     <TableHead>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleSort('customerName')}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("customerName")}
                         className="h-auto p-0 font-semibold text-gray-700 hover:text-gray-900"
                       >
                         <User className="mr-2 h-4 w-4" />
-                        Customer
+                        {t("invoices.customer")}
                         <ArrowUpDown className="ml-2 h-3 w-3" />
                       </Button>
                     </TableHead>
                     <TableHead>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleSort('date')}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("date")}
                         className="h-auto p-0 font-semibold text-gray-700 hover:text-gray-900"
                       >
                         <Calendar className="mr-2 h-4 w-4" />
-                        Date
+                        {t("events.date")}
                         <ArrowUpDown className="ml-2 h-3 w-3" />
                       </Button>
                     </TableHead>
                     <TableHead>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleSort('amount')}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("amount")}
                         className="h-auto p-0 font-semibold text-gray-700 hover:text-gray-900"
                       >
                         <CircleDollarSign className="mr-2 h-4 w-4" />
-                        Amount
+                        {t("invoices.amount")}
                         <ArrowUpDown className="ml-2 h-3 w-3" />
                       </Button>
                     </TableHead>
                     <TableHead>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleSort('status')}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("status")}
                         className="h-auto p-0 font-semibold text-gray-700 hover:text-gray-900"
                       >
-                        Status
+                        {t("invoices.status")}
                         <ArrowUpDown className="ml-2 h-3 w-3" />
                       </Button>
                     </TableHead>
@@ -397,13 +458,11 @@ export default function Invoices() {
                 </TableHeader>
                 <TableBody>
                   {filteredAndSortedInvoices.map((invoice) => (
-                    <TableRow 
-                      key={invoice.id} 
+                    <TableRow
+                      key={invoice.id}
                       className="hover:bg-gray-50/50 transition-colors duration-150"
                     >
-                      <TableCell className="font-mono text-sm font-medium">
-                        #{invoice.id}
-                      </TableCell>
+                   
                       <TableCell>
                         <div className="font-medium text-gray-900">
                           {invoice.customerName}
@@ -416,7 +475,7 @@ export default function Invoices() {
                         {formatCurrency(invoice.amount)}
                       </TableCell>
                       <TableCell>
-                        <Badge 
+                        <Badge
                           variant={getStatusBadgeVariant(invoice.status)}
                           className="capitalize font-medium"
                         >
@@ -427,11 +486,17 @@ export default function Invoices() {
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                              >
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>More actions</TooltipContent>
+                            <TooltipContent>
+                              {t("invoices.moreActions")}
+                            </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       </TableCell>

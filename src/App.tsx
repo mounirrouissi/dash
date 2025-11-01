@@ -7,7 +7,6 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
-  SidebarInput,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -152,22 +151,6 @@ function AppContent() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
-          {/* Search input */}
-          {isSidebarOpen && (
-            <form>
-              <SidebarGroup className="py-0">
-                <SidebarGroupContent className="relative">
-                  <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
-                  <SidebarInput
-                    placeholder={t("navigation.search")}
-                    className="pl-8"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </SidebarGroupContent>
-              </SidebarGroup>
-            </form>
-          )}
         </SidebarHeader>
         <SidebarContent>
           {/* Main Navigation */}
@@ -193,7 +176,7 @@ function AppContent() {
             </SidebarGroupContent>
           </SidebarGroup>
           {/* Secondary Navigation */}
-          <SidebarGroup>
+          {/* <SidebarGroup>
             {isSidebarOpen && <SidebarGroupLabel>Tools</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
@@ -213,9 +196,9 @@ function AppContent() {
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
-          </SidebarGroup>
+          </SidebarGroup> */}
           {/* Quick Actions */}
-          <SidebarGroup>
+          {/* <SidebarGroup>
             {isSidebarOpen && (
               <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
             )}
@@ -243,7 +226,7 @@ function AppContent() {
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
-          </SidebarGroup>
+          </SidebarGroup> */}
         </SidebarContent>
         <SidebarFooter>
           <SidebarMenu>
@@ -322,7 +305,7 @@ function AppContent() {
               </svg>
             </button>
           )}
-          <h1 className="text-xl font-semibold text-gray-900 capitalize">
+          <h1 className="text-xl font-semibold text-gray-900">
             {activeRoute === "/"
               ? t("dashboard.title")
               : activeRoute === "/invoices"
