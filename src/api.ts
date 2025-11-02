@@ -387,13 +387,28 @@ export const formatCurrency = (amount: string | number | undefined): string => {
 };
 
 // Helper to format date
-export const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("en-US", {
+export const formatDate = (dateValue: any): string => {
+  if (Array.isArray(dateValue)) {
+    // Important: In JavaScript, months are 0-based (0 = January)
+    const [year, month, day, hour = 0, minute = 0, second = 0] = dateValue;
+    const date = new Date(year, month - 1, day, hour, minute, second);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
+  // fallback if it’s already a string or Date
+  const date = new Date(dateValue);
+  if (isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
   });
 };
+
 
 export const getAllInvoices = async (): Promise<Invoice[]> => {
   // Using Invoice type

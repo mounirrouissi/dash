@@ -251,7 +251,7 @@ function AppContent() {
       </Sidebar>
 
       {/* Sidebar Toggle Button - positioned outside sidebar */}
-      {!isMobile && (
+      {!isMobile && !isMedium && (
         <button
           onClick={toggleSidebar}
           className="fixed top-4 z-50 p-2 rounded-full bg-white border border-gray-200 shadow-lg hover:bg-gray-50 transition-all duration-200 ease-in-out"
